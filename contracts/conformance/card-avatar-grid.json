@@ -1,0 +1,149 @@
+{
+  "id": "card-avatar-grid",
+  "title": "avatar 与 grid 节点",
+  "note": "avatar = image + aspect:circle 的快捷写法（size 直径）；grid columns 由宿主钳制 1~3，超 4 张走 overflowMore 压罩。",
+  "cases": [
+    {
+      "name": "avatar 全字段",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "avatar",
+          "src": "https://example.com/avatar.png",
+          "size": 40,
+          "flex": 1,
+          "transport": {
+            "encoding": "base64"
+          },
+          "decrypt": {
+            "algorithm": "aes-128-ecb",
+            "key": "00112233445566778899aabbccddeeff",
+            "iv": ""
+          },
+          "target": {
+            "action": "list",
+            "url": "/author/1/",
+            "channel": "author-list"
+          }
+        }
+      }
+    },
+    {
+      "name": "grid 全字段（columns 2 + gap + overflowMore）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 5,
+          "depth": 2,
+          "images": 4
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "grid",
+          "columns": 2,
+          "gap": 8,
+          "flex": 1,
+          "overflowMore": {
+            "count": 9,
+            "label": "查看全部"
+          },
+          "children": [
+            {
+              "type": "image",
+              "src": "https://example.com/1.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/2.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/3.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/4.jpg",
+              "aspect": "1:1"
+            }
+          ],
+          "target": {
+            "action": "detail",
+            "url": "https://example.com/post/1"
+          }
+        }
+      }
+    },
+    {
+      "name": "grid columns 越界（9）仍合法（宿主钳制 3）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 2,
+          "depth": 2,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "grid",
+          "columns": 9,
+          "children": [
+            {
+              "type": "image",
+              "src": "https://example.com/g.jpg",
+              "aspect": "1:1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "grid 内嵌套 stack（children 任意节点）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 3,
+          "depth": 3,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "grid",
+          "columns": 3,
+          "children": [
+            {
+              "type": "stack",
+              "direction": "column",
+              "children": [
+                {
+                  "type": "text",
+                  "text": "格内文本"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

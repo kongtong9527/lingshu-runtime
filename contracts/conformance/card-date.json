@@ -1,0 +1,126 @@
+{
+  "id": "card-date",
+  "title": "date 节点：ISO 字符串 + 五种 format + 文本位字段",
+  "note": "date 为 ISO8601（宿主按 format 渲染，解析不出时原样显示）；文本位字段与 text 节点同义（font/textColor/textAlign/maxLines/minScale/flex）。",
+  "cases": [
+    {
+      "name": "date 全字段（format:date + 字体/对齐/行数/缩放/flex）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "date",
+          "date": "2026-10-13T08:30:00Z",
+          "format": "date",
+          "font": {
+            "size": "caption2",
+            "weight": "medium"
+          },
+          "textColor": "$textTertiary",
+          "textAlign": "left",
+          "maxLines": 1,
+          "minScale": 0.9,
+          "flex": 1,
+          "target": {
+            "action": "list",
+            "url": "/archive/2026-10/",
+            "category": "y=2026"
+          }
+        }
+      }
+    },
+    {
+      "name": "format 五种全量",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 6,
+          "depth": 2,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "direction": "column",
+          "children": [
+            {
+              "type": "date",
+              "date": "2026-10-13T08:30:00Z",
+              "format": "date"
+            },
+            {
+              "type": "date",
+              "date": "2026-10-13T08:30:00Z",
+              "format": "time"
+            },
+            {
+              "type": "date",
+              "date": "2026-10-13T08:30:00Z",
+              "format": "relative"
+            },
+            {
+              "type": "date",
+              "date": "2026-10-13T08:30:00Z",
+              "format": "offset"
+            },
+            {
+              "type": "date",
+              "date": "2026-10-13T08:30:00Z",
+              "format": "timer"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "无 format（宿主原样显示 date）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "date",
+          "date": "刚刚"
+        }
+      }
+    },
+    {
+      "name": "毫秒时间戳字符串（宿主按数字解析）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "date",
+          "date": "1760000000000",
+          "format": "date"
+        }
+      }
+    }
+  ]
+}

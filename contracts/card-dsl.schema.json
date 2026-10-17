@@ -1,0 +1,1170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "灵枢卡片 DSL v1（Card DSL v1）",
+  "description": "列表项自定义卡片（ListItem.card）的唯一机器可读契约，对应 ADR-0050。字段集三端一致（本 schema / runtime/src/types.ts / ios/Lingshu/Models/CardModels.swift），由 scripts/contract-gates 强制。结构不合法（version≠1 或 root 非已知节点）→ 宿主整卡回退；未知 type 节点 → 跳过该节点不炸整卡；字段值非法（如 aspect='abc'）→ 宿主按各字段声明的缺省回退并记 warning，不算结构非法。注意：本 schema 只锁**结构**（字段名与类型），不锁取值合法性——容差回退是刻意设计，语料见 conformance/。",
+  "$ref": "#/$defs/CardDSL",
+  "$defs": {
+    "CardDSL": {
+      "type": "object",
+      "description": "卡片根信封（ListItem.card）。version 必须为 1，root 必须是**已知**节点类型——未知 root 视为未来版本 DSL，宿主整卡回退（未知**子**节点只跳节点，见 CardNode）。",
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "root": {
+          "$ref": "#/$defs/RootNode"
+        },
+        "accessibilityLabel": {
+          "type": "string",
+          "description": "无障碍覆盖；缺省宿主自动拼标题+作者+时长"
+        }
+      },
+      "required": [
+        "version",
+        "root"
+      ],
+      "additionalProperties": false
+    },
+    "RootNode": {
+      "description": "卡片根节点：只接受 v1 的十种已知节点类型。未知类型当 root（如未来版本新增的节点）→ 宿主整卡回退老卡，渲染空卡不如回退。",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/StackNode"
+        },
+        {
+          "$ref": "#/$defs/TextNode"
+        },
+        {
+          "$ref": "#/$defs/ImageNode"
+        },
+        {
+          "$ref": "#/$defs/AvatarNode"
+        },
+        {
+          "$ref": "#/$defs/GridNode"
+        },
+        {
+          "$ref": "#/$defs/PillNode"
+        },
+        {
+          "$ref": "#/$defs/ActionBarNode"
+        },
+        {
+          "$ref": "#/$defs/SpacerNode"
+        },
+        {
+          "$ref": "#/$defs/DividerNode"
+        },
+        {
+          "$ref": "#/$defs/DateNode"
+        }
+      ]
+    },
+    "CardNode": {
+      "description": "卡片节点。已知 type 走各自变体（字段集封闭）；未知 type 只要求有 type 字段，宿主跳过该节点（Q20 容差）。",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/StackNode"
+        },
+        {
+          "$ref": "#/$defs/TextNode"
+        },
+        {
+          "$ref": "#/$defs/ImageNode"
+        },
+        {
+          "$ref": "#/$defs/AvatarNode"
+        },
+        {
+          "$ref": "#/$defs/GridNode"
+        },
+        {
+          "$ref": "#/$defs/PillNode"
+        },
+        {
+          "$ref": "#/$defs/ActionBarNode"
+        },
+        {
+          "$ref": "#/$defs/SpacerNode"
+        },
+        {
+          "$ref": "#/$defs/DividerNode"
+        },
+        {
+          "$ref": "#/$defs/DateNode"
+        },
+        {
+          "$ref": "#/$defs/UnknownNode"
+        }
+      ]
+    },
+    "UnknownNode": {
+      "type": "object",
+      "description": "未知节点类型（前向兼容）：宿主解码为 unknown、渲染为空视图，不炸整卡。字段不做约束（新版本可能给老宿主带来不认识的新字段）。",
+      "properties": {
+        "type": {
+          "type": "string",
+          "not": {
+            "enum": [
+              "stack",
+              "text",
+              "image",
+              "avatar",
+              "grid",
+              "pill",
+              "actionBar",
+              "spacer",
+              "divider",
+              "date"
+            ]
+          }
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "StackNode": {
+      "type": "object",
+      "description": "弹性容器。direction 缺省 row；alignItems 缺省 center（管交叉轴）；justifyContent 管主轴且【有值即撑满整行】。",
+      "properties": {
+        "type": {
+          "const": "stack"
+        },
+        "direction": {
+          "enum": [
+            "row",
+            "column"
+          ]
+        },
+        "alignItems": {
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ]
+        },
+        "gap": {
+          "type": "number"
+        },
+        "padding": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          ]
+        },
+        "backgroundColor": {
+          "$ref": "#/$defs/CardColor"
+        },
+        "borderRadius": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto"
+            }
+          ]
+        },
+        "justifyContent": {
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ]
+        },
+        "flex": {
+          "type": "number"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CardNode"
+          }
+        },
+        "target": {
+          "$ref": "#/$defs/CardTarget"
+        }
+      },
+      "required": [
+        "type",
+        "children"
+      ],
+      "additionalProperties": false
+    },
+    "TextNode": {
+      "type": "object",
+      "description": "文本。font.size 支持语义名或数字；缺省标题 2 行、超长截断不撑高。",
+      "properties": {
+        "type": {
+          "const": "text"
+        },
+        "text": {
+          "$ref": "#/$defs/TextValue"
+        },
+        "font": {
+          "$ref": "#/$defs/CardFont"
+        },
+        "textColor": {
+          "$ref": "#/$defs/CardColor"
+        },
+        "textAlign": {
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ]
+        },
+        "maxLines": {
+          "type": "integer"
+        },
+        "minScale": {
+          "type": "number",
+          "description": "空间不足时字号缩放下限（0~1，缺省 1 = 不缩）。宿主按各端原生能力近似实现，越界钳制。"
+        },
+        "flex": {
+          "type": "number"
+        },
+        "target": {
+          "$ref": "#/$defs/CardTarget"
+        }
+      },
+      "required": [
+        "type",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "ImageNode": {
+      "type": "object",
+      "description": "图片：盒高由 aspect 按宽度反推（不写绝对 px）。aspect 缺省/非法一律回退 16:9；resizeMode 缺省 cover。",
+      "properties": {
+        "type": {
+          "const": "image"
+        },
+        "src": {
+          "type": "string"
+        },
+        "aspect": {
+          "type": "string",
+          "description": "16:9 / 4:3 / 3:4 / 2:3 / 1:1 / circle，或通用 W:H（整数或小数）。缺省/非法回退 16:9。"
+        },
+        "resizeMode": {
+          "type": "string",
+          "description": "cover（缺省，填满裁溢出）/ contain（整图可见留白）；其它值回 cover。"
+        },
+        "borderRadius": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto"
+            }
+          ]
+        },
+        "flex": {
+          "type": "number"
+        },
+        "overlays": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CardOverlay"
+          },
+          "description": "超过 5 个宿主截断（容差，不算结构非法）"
+        },
+        "transport": {
+          "$ref": "#/$defs/ImageTransport"
+        },
+        "decrypt": {
+          "$ref": "#/$defs/ImageEncryption"
+        },
+        "target": {
+          "$ref": "#/$defs/CardTarget"
+        }
+      },
+      "required": [
+        "type",
+        "src"
+      ],
+      "additionalProperties": false
+    },
+    "AvatarNode": {
+      "type": "object",
+      "description": "圆形头像（image + aspect:circle 的快捷写法）。size 为直径 pt，缺省 40。",
+      "properties": {
+        "type": {
+          "const": "avatar"
+        },
+        "src": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number"
+        },
+        "flex": {
+          "type": "number"
+        },
+        "transport": {
+          "$ref": "#/$defs/ImageTransport"
+        },
+        "decrypt": {
+          "$ref": "#/$defs/ImageEncryption"
+        },
+        "target": {
+          "$ref": "#/$defs/CardTarget"
+        }
+      },
+      "required": [
+        "type",
+        "src"
+      ],
+      "additionalProperties": false
+    },
+    "GridNode": {
+      "type": "object",
+      "description": "多图宫格。columns 1~3（宿主钳制上限 3）；children 超 4 张建议只给前 4 + overflowMore。",
+      "properties": {
+        "type": {
+          "const": "grid"
+        },
+        "columns": {
+          "type": "integer"
+        },
+        "gap": {
+          "type": "number"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CardNode"
+          }
+        },
+        "overflowMore": {
+          "$ref": "#/$defs/GridOverflow"
+        },
+        "flex": {
+          "type": "number"
+        },
+        "target": {
+          "$ref": "#/$defs/CardTarget"
+        }
+      },
+      "required": [
+        "type",
+        "columns",
+        "children"
+      ],
+      "additionalProperties": false
+    },
+    "PillNode": {
+      "type": "object",
+      "description": "胶囊/徽标。borderRadius 缺省 = 胶囊全圆；borderColor 缺省 = 无边框；shape:circle = 固定直径圆（size，缺省 24）。",
+      "properties": {
+        "type": {
+          "const": "pill"
+        },
+        "text": {
+          "$ref": "#/$defs/TextValue"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "backgroundColor": {
+          "$ref": "#/$defs/CardColor"
+        },
+        "textColor": {
+          "$ref": "#/$defs/CardColor"
+        },
+        "borderRadius": {
+          "type": "number"
+        },
+        "borderColor": {
+          "$ref": "#/$defs/CardColor"
+        },
+        "shape": {
+          "const": "circle"
+        },
+        "size": {
+          "type": "number"
+        },
+        "flex": {
+          "type": "number"
+        },
+        "target": {
+          "$ref": "#/$defs/CardTarget"
+        }
+      },
+      "required": [
+        "type",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "ActionBarNode": {
+      "type": "object",
+      "description": "赞转评一行。items 最多渲染前 4 项。",
+      "properties": {
+        "type": {
+          "const": "actionBar"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActionBarItem"
+          }
+        },
+        "flex": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    "GridOverflow": {
+      "type": "object",
+      "description": "宫格「查看更多」压罩：在最后一格压罩显示 +N。",
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "count",
+        "label"
+      ],
+      "additionalProperties": false
+    },
+    "ActionBarItem": {
+      "type": "object",
+      "description": "actionBar 单项：有 invoke target 才渲染为可点按钮，无则纯展示、跟整卡走。",
+      "properties": {
+        "icon": {
+          "type": "string"
+        },
+        "text": {
+          "$ref": "#/$defs/TextValue"
+        },
+        "target": {
+          "$ref": "#/$defs/CardTarget"
+        }
+      },
+      "required": [
+        "icon",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "SpacerNode": {
+      "type": "object",
+      "description": "占位/弹性撑开。无 length = 双向撑满父容器剩余空间（横向顶右、纵向顶底靠它）；有 length = 固定高度占位。spacer 天然弹性，故不声明 flex。",
+      "properties": {
+        "type": {
+          "const": "spacer"
+        },
+        "length": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "DividerNode": {
+      "type": "object",
+      "description": "全宽细分隔线（0.5~1pt），color 缺省 = 宿主分隔色。",
+      "properties": {
+        "type": {
+          "const": "divider"
+        },
+        "color": {
+          "$ref": "#/$defs/CardColor"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "DateNode": {
+      "type": "object",
+      "description": "日期文本。date 为 ISO8601（宿主按 format 渲染，解析不出时原样显示）。文本位字段与 text 节点同义（font/textColor/textAlign/maxLines/minScale/flex）。",
+      "properties": {
+        "type": {
+          "const": "date"
+        },
+        "date": {
+          "type": "string"
+        },
+        "format": {
+          "enum": [
+            "date",
+            "time",
+            "relative",
+            "offset",
+            "timer"
+          ]
+        },
+        "font": {
+          "$ref": "#/$defs/CardFont"
+        },
+        "textColor": {
+          "$ref": "#/$defs/CardColor"
+        },
+        "textAlign": {
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ]
+        },
+        "maxLines": {
+          "type": "integer"
+        },
+        "minScale": {
+          "type": "number"
+        },
+        "flex": {
+          "type": "number"
+        },
+        "target": {
+          "$ref": "#/$defs/CardTarget"
+        }
+      },
+      "required": [
+        "type",
+        "date"
+      ],
+      "additionalProperties": false
+    },
+    "CardFont": {
+      "type": "object",
+      "description": "字号支持语义名（largeTitle/title/title2/title3/headline/body/callout/subheadline/footnote/caption1/caption2）或数字 pt。",
+      "properties": {
+        "size": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "weight": {
+          "type": "string"
+        },
+        "family": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CardOverlay": {
+      "type": "object",
+      "description": "压图徽标（位置枚举，非自由坐标）。shape 缺省 rounded 小胶囊；circle = 圆形钮（size 缺省 34）。opacity 只淡底不淡图标/文字，越界钳制 0~1。",
+      "properties": {
+        "position": {
+          "enum": [
+            "topLeft",
+            "topRight",
+            "bottomLeft",
+            "bottomRight",
+            "center"
+          ]
+        },
+        "icon": {
+          "type": "string"
+        },
+        "text": {
+          "$ref": "#/$defs/TextValue"
+        },
+        "backgroundColor": {
+          "$ref": "#/$defs/CardColor"
+        },
+        "textColor": {
+          "$ref": "#/$defs/CardColor"
+        },
+        "shape": {
+          "enum": [
+            "circle",
+            "rounded"
+          ]
+        },
+        "opacity": {
+          "type": "number"
+        },
+        "size": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "position"
+      ],
+      "additionalProperties": false
+    },
+    "CardColor": {
+      "description": "固定串（6/8 位 Hex、rgba()、语义名 $textPrimary/$textSecondary/$textTertiary/$accent/$surface/$separator）或深浅双写。",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "light": {
+              "type": "string"
+            },
+            "dark": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "light",
+            "dark"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "FormattedValue": {
+      "type": "object",
+      "description": "插件给原始值、宿主统一格式化（Q13）：duration 秒 → 12:50；count 次数 → 1.2万；relative/date/datetime 为毫秒时间戳。",
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "format": {
+          "enum": [
+            "duration",
+            "count",
+            "relative",
+            "date",
+            "datetime"
+          ]
+        }
+      },
+      "required": [
+        "value",
+        "format"
+      ],
+      "additionalProperties": false
+    },
+    "TextValue": {
+      "description": "文本位：直串或格式化值。",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/FormattedValue"
+        }
+      ]
+    },
+    "CardTarget": {
+      "description": "节点点击行为。缺省（无 target）= 冒泡继承整卡点击；有显式 target（含 noop）= 拦截不冒泡。",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/NoopTarget"
+        },
+        {
+          "$ref": "#/$defs/PageJumpTarget"
+        },
+        {
+          "$ref": "#/$defs/InvokeTarget"
+        }
+      ]
+    },
+    "NoopTarget": {
+      "type": "object",
+      "description": "纯展示：拦截冒泡、不可点。",
+      "properties": {
+        "action": {
+          "const": "noop"
+        }
+      },
+      "required": [
+        "action"
+      ],
+      "additionalProperties": false
+    },
+    "InvokeTarget": {
+      "type": "object",
+      "description": "写侧：通用调用（卡片写侧唯一通道）。",
+      "properties": {
+        "action": {
+          "const": "invoke"
+        },
+        "call": {
+          "$ref": "#/$defs/InvokeCall"
+        },
+        "effect": {
+          "$ref": "#/$defs/InvokeEffect"
+        }
+      },
+      "required": [
+        "action",
+        "call"
+      ],
+      "additionalProperties": false
+    },
+    "InvokeCall": {
+      "type": "object",
+      "description": "插件声明方法名 + 参数，宿主通用直调。stateKey 缺省 active：调用前宿主置 params[stateKey] = !当前态。",
+      "properties": {
+        "function": {
+          "type": "string"
+        },
+        "params": {
+          "type": "object"
+        },
+        "stateKey": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "function"
+      ],
+      "additionalProperties": false
+    },
+    "InvokeEffect": {
+      "description": "成功后宿主如何就地翻转（封闭集合，与站点无关）；终态以服务端返回为准。id 为不透明状态键（getMe.states 同源，缺席 = 关态）。",
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "pill：双态 pill 翻全套（文案 + 底色/字色/边框）。",
+          "properties": {
+            "kind": {
+              "const": "pill"
+            },
+            "id": {
+              "type": "string"
+            },
+            "active": {
+              "type": "boolean"
+            },
+            "resultKey": {
+              "type": "string"
+            },
+            "onText": {
+              "type": "string"
+            },
+            "offText": {
+              "type": "string"
+            },
+            "onStyle": {
+              "$ref": "#/$defs/PillStyle"
+            },
+            "offStyle": {
+              "$ref": "#/$defs/PillStyle"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "count：点亮翻转 + 计数 ±1（actionBar 项用）。",
+          "properties": {
+            "kind": {
+              "const": "count"
+            },
+            "id": {
+              "type": "string"
+            },
+            "active": {
+              "type": "boolean"
+            },
+            "resultKey": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "none：只调服务端，不改本地。",
+          "properties": {
+            "kind": {
+              "const": "none"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "PillStyle": {
+      "type": "object",
+      "description": "双态 pill 单态完整规格：出现即完整，缺键 = 无该属性。",
+      "properties": {
+        "backgroundColor": {
+          "$ref": "#/$defs/CardColor"
+        },
+        "textColor": {
+          "$ref": "#/$defs/CardColor"
+        },
+        "borderColor": {
+          "$ref": "#/$defs/CardColor"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PageJumpTarget": {
+      "description": "结构化跳转目标（ADR-0025）：插件声明「点这里去哪」，宿主驱动内部导航。",
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "list：列表（category 组合查询串 / url 页面通道，二者至少其一）。channel 为列表通道标识（ADR-0064），宿主原样透传进 PluginContext.channel。",
+          "properties": {
+            "action": {
+              "const": "list"
+            },
+            "url": {
+              "type": "string"
+            },
+            "category": {
+              "type": "string"
+            },
+            "filters": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/CategoryGroup"
+              }
+            },
+            "channel": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "search：搜索（query 为查询词）。",
+          "properties": {
+            "action": {
+              "const": "search"
+            },
+            "query": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "query"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "detail：详情页。",
+          "properties": {
+            "action": {
+              "const": "detail"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "url"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "reading：阅读页。",
+          "properties": {
+            "action": {
+              "const": "reading"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "url"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "play：出流入口 URL（详情页或播放页），宿主调 fetchPlayUrl 解析最终流。",
+          "properties": {
+            "action": {
+              "const": "play"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "url"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "categories：分类页。",
+          "properties": {
+            "action": {
+              "const": "categories"
+            }
+          },
+          "required": [
+            "action"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ImageEncryption": {
+      "type": "object",
+      "description": "图片解密参数（ADR-0003）：缺省继承整卡 metadata 管线。",
+      "properties": {
+        "algorithm": {
+          "type": "string"
+        },
+        "padding": {
+          "type": "string"
+        },
+        "encoding": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "iv": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "algorithm",
+        "key",
+        "iv"
+      ],
+      "additionalProperties": false
+    },
+    "ImageTransport": {
+      "type": "object",
+      "description": "图片传输参数（如 base64 文本承载、URL 模板）。",
+      "properties": {
+        "encoding": {
+          "type": "string"
+        },
+        "decodedMime": {
+          "type": "string"
+        },
+        "sourceTemplate": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "encoding"
+      ],
+      "additionalProperties": false
+    },
+    "CategoryGroup": {
+      "type": "object",
+      "description": "筛选组（ADR-0021/0063/0066）：卡片跳转目标可携带落地页筛选栏。key 在同组数组内必须唯一。",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "description": "select（缺省）/ check / text / sort；未知类型宿主降级按 select 渲染。"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CategoryNode"
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CategorySection"
+          }
+        },
+        "allowMultiple": {
+          "type": "boolean",
+          "description": "兼容别名：等价 type:'check'；仅在未声明 type 时生效。"
+        },
+        "display": {
+          "type": "string",
+          "description": "仅 check：checkbox（缺省）/ tags（芯片云）；未知值按 checkbox 渲染。"
+        },
+        "canExclude": {
+          "type": "boolean",
+          "description": "仅 check：允许「包含/排除」切换，排除值编码用 - 前缀。"
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "仅 text：输入框占位文案。"
+        },
+        "canAscend": {
+          "type": "boolean",
+          "description": "仅 sort：是否支持升/降序切换，缺省 false。"
+        },
+        "defaultValue": {
+          "$ref": "#/$defs/SortDefaultValue"
+        },
+        "dependsOn": {
+          "type": "string",
+          "description": "联动父组 key（ADR-0063）；缺省 = 独立静态组。"
+        },
+        "visibleWhen": {
+          "$ref": "#/$defs/CategoryVisibleCondition"
+        },
+        "optionsWhen": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/CategoryNode"
+            }
+          }
+        },
+        "clearPolicy": {
+          "type": "string",
+          "description": "always（缺省/未知回落）/ if-invalid；需配 dependsOn。"
+        }
+      },
+      "required": [
+        "name",
+        "key"
+      ],
+      "additionalProperties": false
+    },
+    "CategoryNode": {
+      "type": "object",
+      "description": "筛选叶子：id 禁逗号（逗号是组合串分隔符）；`-` 前缀为排除值。",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CategoryNode"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "CategorySection": {
+      "type": "object",
+      "description": "分节单组的一节（纯展示分组，节标题不参与编码）。",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CategoryNode"
+          }
+        }
+      },
+      "required": [
+        "title",
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    "CategoryVisibleCondition": {
+      "type": "object",
+      "description": "联动可见条件：父单值命中 equals 才显（字符串判相等、数组判包含）。父限 select/sort 单值组。",
+      "properties": {
+        "equals": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "equals"
+      ],
+      "additionalProperties": false
+    },
+    "SortDefaultValue": {
+      "type": "object",
+      "description": "仅 sort：默认方向；ascending 仅在 canAscend 时生效。",
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "ascending": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "index",
+        "ascending"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

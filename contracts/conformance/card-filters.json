@@ -1,0 +1,283 @@
+{
+  "id": "card-filters",
+  "title": "筛选组（CategoryGroup）与分节/联动（ADR-0021/0063/0066）",
+  "note": "卡片跳转目标可携带落地页筛选栏；本语料覆盖 CategoryGroup 全 15 字段与四种子结构（叶子/分节/可见条件/sort 默认方向）。宿主渲染与联动求值在 iOS FilterState、DevConsole 预览、runtime 校验三处同口径。",
+  "cases": [
+    {
+      "name": "select 组（items 叶子 + children 层级）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "分组筛选",
+          "target": {
+            "action": "list",
+            "url": "/videos/",
+            "filters": [
+              {
+                "name": "分类",
+                "key": "c",
+                "type": "select",
+                "items": [
+                  {
+                    "id": "doujin",
+                    "name": "同人"
+                  },
+                  {
+                    "id": "manga",
+                    "name": "漫画",
+                    "children": [
+                      {
+                        "id": "manga-zh",
+                        "name": "中文"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "check 组（canExclude + display:tags + allowMultiple 兼容别名）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "多选筛选",
+          "target": {
+            "action": "list",
+            "url": "/videos/",
+            "filters": [
+              {
+                "name": "标签",
+                "key": "tags",
+                "type": "check",
+                "display": "tags",
+                "canExclude": true,
+                "items": [
+                  {
+                    "id": "t1",
+                    "name": "标签1"
+                  }
+                ]
+              },
+              {
+                "name": "旧式多选",
+                "key": "old",
+                "allowMultiple": true,
+                "items": [
+                  {
+                    "id": "o1",
+                    "name": "选项1"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "text 组（placeholder）与 sort 组（canAscend + defaultValue）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "文本与排序",
+          "target": {
+            "action": "list",
+            "filters": [
+              {
+                "name": "关键词",
+                "key": "kw",
+                "type": "text",
+                "placeholder": "输入关键词"
+              },
+              {
+                "name": "排序",
+                "key": "o",
+                "type": "sort",
+                "canAscend": true,
+                "defaultValue": {
+                  "index": 0,
+                  "ascending": false
+                },
+                "items": [
+                  {
+                    "id": "mr",
+                    "name": "最新"
+                  },
+                  {
+                    "id": "mv",
+                    "name": "最热"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "分节单组（sections：一个 widget 内多节）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "分节筛选",
+          "target": {
+            "action": "list",
+            "filters": [
+              {
+                "name": "内容标签",
+                "key": "tag",
+                "type": "select",
+                "sections": [
+                  {
+                    "title": "题材",
+                    "items": [
+                      {
+                        "id": "a",
+                        "name": "题材A"
+                      }
+                    ]
+                  },
+                  {
+                    "title": "属性",
+                    "items": [
+                      {
+                        "id": "b",
+                        "name": "属性B"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "联动组（dependsOn + visibleWhen.equals 单值/数组 + optionsWhen + clearPolicy）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "联动筛选",
+          "target": {
+            "action": "list",
+            "url": "/videos/",
+            "filters": [
+              {
+                "name": "类型",
+                "key": "type",
+                "type": "select",
+                "items": [
+                  {
+                    "id": "album",
+                    "name": "图集"
+                  },
+                  {
+                    "id": "video",
+                    "name": "视频"
+                  }
+                ]
+              },
+              {
+                "name": "图集子类",
+                "key": "sub",
+                "type": "select",
+                "dependsOn": "type",
+                "visibleWhen": {
+                  "equals": "album"
+                },
+                "clearPolicy": "if-invalid",
+                "items": [
+                  {
+                    "id": "s1",
+                    "name": "子类1"
+                  }
+                ],
+                "optionsWhen": {
+                  "album": [
+                    {
+                      "id": "s2",
+                      "name": "图集专属"
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "多值可见",
+                "key": "multi",
+                "type": "check",
+                "dependsOn": "type",
+                "visibleWhen": {
+                  "equals": [
+                    "album",
+                    "video"
+                  ]
+                },
+                "items": [
+                  {
+                    "id": "m1",
+                    "name": "通用项"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

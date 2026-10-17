@@ -1,0 +1,71 @@
+name: Feature request
+description: Propose an improvement to the runtime, the CLI, the contracts or the developer documentation.
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature requests are welcome when they improve the **runtime, the CLI, the contracts or the
+        documentation**.
+
+        Not accepted, and closed without discussion:
+
+        - requests to add a **content source, a site plugin or a content policy** — this repository contains
+          none by design, and does not accept them in code, fixtures, docs or issues;
+        - requests whose purpose is to make the runtime fetch, bundle, proxy or ship content for adult or
+          pirate sites;
+        - support for a specific third-party plugin's behaviour.
+
+        See [CONTRIBUTING.md §2](https://github.com/kongtong9527/lingshu-runtime/blob/main/CONTRIBUTING.md#2-scope-what-this-repository-contains)
+        for the full scope. Keep the request neutral about content: no site names, domains or real content.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight
+      options:
+        - label: This request is about the runtime/CLI/contracts/docs, not about adding content sources or site plugins.
+          required: true
+        - label: I searched existing issues and the README for this.
+          required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI ergonomics (commands, options, output)
+        - Sandbox and $lib (http, storage, settings, ui, bundled libraries)
+        - Contracts and contract gates
+        - Plugin API / action dispatch
+        - Developer documentation and the plugin skill package
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what gets in the way today? Please describe the problem before the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What should happen instead? If it touches the card DSL or the `$lib` surface, say so explicitly — that affects three hosts and the conformance corpus.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you tried, or other designs you weighed.
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else that helps — keep it free of site-specific details and personal data.
+    validations:
+      required: false

@@ -1,0 +1,21 @@
+# Issue chooser configuration.
+# Injected from the upstream template on every release — do not edit it in this repository.
+
+blank_issues_enabled: true
+
+contact_links:
+  - name: Security report (private)
+    url: https://github.com/kongtong9527/lingshu-runtime/security/advisories/new
+    about: Do not report security issues in a public issue. The threat model and the reporting process are in SECURITY.md.
+
+  - name: Content sources and site plugins are out of scope
+    url: https://github.com/kongtong9527/lingshu-runtime/blob/main/CONTRIBUTING.md#2-scope-what-this-repository-contains
+    about: This repository contains no content sources, no site implementations and no content policy. Requests to add a site plugin, a site list or content for adult/pirate sites are not accepted — in code, fixtures, docs or issues. Such requests are closed without discussion.
+
+  - name: Writing a plugin (skill package)
+    url: https://github.com/kongtong9527/lingshu-runtime/tree/main/skills/lingshu-plugin-dev
+    about: How to author a .plugin.js plugin — workflow, $lib reference, card DSL reference and a template. This repository does not ship plugins; load your own through --dir.
+
+  - name: This repository is a published snapshot
+    url: https://github.com/kongtong9527/lingshu-runtime/blob/main/CONTRIBUTING.md
+    about: Releases replace the tracked tree with an upstream snapshot; CI files are injected from upstream templates and must not be edited here; pull requests have to be carried upstream to take effect.

@@ -1,0 +1,244 @@
+{
+  "id": "card-pill",
+  "title": "pill 节点与写侧通用调用（InvokeCall / InvokeEffect）",
+  "note": "borderRadius 缺省 = 胶囊全圆；borderColor 缺省 = 无边框；shape:circle = 固定直径圆（size 缺省 24，非法回缺省）。写侧三态：pill / count / none。",
+  "cases": [
+    {
+      "name": "基础胶囊（格式化值 + 图标 + 圆角矩形 + 边框）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "pill",
+          "text": {
+            "value": 60624,
+            "format": "count"
+          },
+          "icon": "play",
+          "backgroundColor": {
+            "light": "#FFF0F0",
+            "dark": "#2A1A1A"
+          },
+          "textColor": "#C00000",
+          "borderRadius": 8,
+          "borderColor": {
+            "light": "#E0E0E0",
+            "dark": "#525252"
+          },
+          "flex": 1,
+          "target": {
+            "action": "noop"
+          }
+        }
+      }
+    },
+    {
+      "name": "固定圆形徽（shape:circle + size）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "pill",
+          "text": "10",
+          "shape": "circle",
+          "size": 28,
+          "backgroundColor": {
+            "light": "#00000000",
+            "dark": "#00000000"
+          },
+          "textColor": "$textSecondary",
+          "borderColor": "$separator"
+        }
+      }
+    },
+    {
+      "name": "circle 徽 size 非法 → 回缺省 24 + warning",
+      "expect": {
+        "ok": true,
+        "warnings": [
+          "pill.size 非法"
+        ],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "pill",
+          "text": "7",
+          "shape": "circle",
+          "size": -3
+        }
+      }
+    },
+    {
+      "name": "写侧双态 pill（effect:pill 全字段 + call.stateKey/params）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "pill",
+          "text": "+关注",
+          "backgroundColor": {
+            "light": "#2E7CF6",
+            "dark": "#2E7CF6"
+          },
+          "textColor": "#FFFFFF",
+          "target": {
+            "action": "invoke",
+            "call": {
+              "function": "setUserState",
+              "params": {
+                "userId": "990228",
+                "kind": "follow"
+              },
+              "stateKey": "following"
+            },
+            "effect": {
+              "kind": "pill",
+              "id": "user:990228",
+              "active": false,
+              "resultKey": "following",
+              "onText": "已关注",
+              "offText": "+关注",
+              "onStyle": {
+                "backgroundColor": {
+                  "light": "#FFFFFF",
+                  "dark": "#1C1C1E"
+                },
+                "textColor": "#2E7CF6",
+                "borderColor": "#2E7CF6"
+              },
+              "offStyle": {
+                "backgroundColor": "#2E7CF6",
+                "textColor": "#FFFFFF"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "写侧计数态（effect:count + resultKey）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "pill",
+          "text": {
+            "value": 2000,
+            "format": "count"
+          },
+          "icon": "heart",
+          "target": {
+            "action": "invoke",
+            "call": {
+              "function": "toggleLike",
+              "params": {
+                "id": "v1"
+              }
+            },
+            "effect": {
+              "kind": "count",
+              "id": "like:v1",
+              "active": true,
+              "resultKey": "liked"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "写侧静默态（effect:none，只调服务端不改本地）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "pill",
+          "text": "签到",
+          "target": {
+            "action": "invoke",
+            "call": {
+              "function": "doCheckIn"
+            },
+            "effect": {
+              "kind": "none",
+              "id": "checkin"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "无 effect 的写侧调用（缺省只调服务端）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "pill",
+          "text": "收藏",
+          "target": {
+            "action": "invoke",
+            "call": {
+              "function": "addFavorite",
+              "params": {
+                "id": "v1"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

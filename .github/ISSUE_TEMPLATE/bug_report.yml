@@ -1,0 +1,83 @@
+name: Bug report
+description: Report a defect in the runtime, the CLI, the bundled sandbox libraries or the contract gates.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        Please keep the report **neutral about content**: this repository contains no content sources and no
+        site implementations, so do not name sites, paste domains or quote real content. Describe the
+        plugin/site generically ("the plugin", "the site") and attach a minimal synthetic plugin or a local
+        fixture instead.
+
+        Security issues must **not** be filed here — see
+        [SECURITY.md](https://github.com/kongtong9527/lingshu-runtime/blob/main/SECURITY.md).
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight
+      options:
+        - label: I read the README, CONTRIBUTING.md (this repository is a published snapshot and CI is injected from upstream) and SECURITY.md.
+          required: true
+        - label: This is a defect in the runtime/CLI/gates, not a complaint about what a third-party plugin does on a particular site.
+          required: true
+        - label: I have not pasted any site name, domain, plugin id from a content source, or real user data.
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: Snapshot / version
+      description: The `lingshu-runtime` version or commit you are running (the README footer shows the snapshot date and version).
+      placeholder: "0.1.12"
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      description: Output of `node -v`.
+      placeholder: v20.11.0
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI (list / run / test / listings)
+        - Sandbox and $lib (http, storage, settings, ui, bundled libraries)
+        - Contracts and contract gates
+        - Plugin loading, metadata header, action dispatch
+        - Documentation
+        - Other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you observed, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: |
+        Exact commands, with the plugin directory replaced by a placeholder path. If a plugin is involved,
+        attach a minimal synthetic plugin (with its `// ==Plugin== … // ==EndPlugin==` metadata header) or a
+        local fixture rather than pointing at a real site.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant output
+      description: Command output or the stack trace, redacted of anything site-specific or personal.
+      render: shell
+    validations:
+      required: false

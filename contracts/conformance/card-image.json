@@ -1,0 +1,372 @@
+{
+  "id": "card-image",
+  "title": "image 节点：比例与填充方式 + 压图徽标 + 传输/解密",
+  "note": "aspect 缺省/非法一律回退 16:9（宿主记 warning）；resizeMode 缺省 cover；overlay 位置枚举、shape 缺省 rounded。",
+  "cases": [
+    {
+      "name": "image 全字段（16:9 + cover + auto 圆角 + 四角徽标）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "image",
+          "src": "https://example.com/cover.jpg",
+          "aspect": "16:9",
+          "resizeMode": "cover",
+          "borderRadius": "auto",
+          "flex": 1,
+          "overlays": [
+            {
+              "position": "topLeft",
+              "text": "分类",
+              "icon": "flame",
+              "backgroundColor": "#FF0000",
+              "textColor": {
+                "light": "#FFFFFF",
+                "dark": "#000000"
+              },
+              "shape": "rounded",
+              "opacity": 0.8,
+              "size": 20
+            },
+            {
+              "position": "topRight",
+              "text": {
+                "value": 1760000000000,
+                "format": "relative"
+              }
+            },
+            {
+              "position": "bottomLeft",
+              "icon": "eye",
+              "text": {
+                "value": 12000,
+                "format": "count"
+              }
+            },
+            {
+              "position": "bottomRight",
+              "icon": "clock",
+              "text": {
+                "value": 750,
+                "format": "duration"
+              }
+            }
+          ],
+          "transport": {
+            "encoding": "base64",
+            "decodedMime": "image/jpeg",
+            "sourceTemplate": "https://cdn.example.com/{id}.jpg"
+          },
+          "decrypt": {
+            "algorithm": "aes-256-cbc",
+            "padding": "pkcs7",
+            "encoding": "hex",
+            "key": "00112233445566778899aabbccddeeff",
+            "iv": "00112233445566778899aabbccddeeff"
+          },
+          "target": {
+            "action": "detail",
+            "url": "https://example.com/v/1"
+          }
+        }
+      }
+    },
+    {
+      "name": "aspect 枚举全量（4:3 / 3:4 / 2:3 / 1:1 / circle）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 6,
+          "depth": 2,
+          "images": 5
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "direction": "row",
+          "children": [
+            {
+              "type": "image",
+              "src": "https://example.com/a.jpg",
+              "aspect": "4:3"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/b.jpg",
+              "aspect": "3:4"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/c.jpg",
+              "aspect": "2:3"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/d.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/e.jpg",
+              "aspect": "circle"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "aspect 通用 W:H（小数）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "image",
+          "src": "https://example.com/wide.jpg",
+          "aspect": "1.86:1"
+        }
+      }
+    },
+    {
+      "name": "resizeMode contain（整图可见）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "image",
+          "src": "https://example.com/long.jpg",
+          "aspect": "3:4",
+          "resizeMode": "contain"
+        }
+      }
+    },
+    {
+      "name": "aspect 非法（'abc'）→ 宿主回退 16:9 并记 warning",
+      "expect": {
+        "ok": true,
+        "warnings": [
+          "image.aspect 缺省/非法"
+        ],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "image",
+          "src": "https://example.com/x.jpg",
+          "aspect": "abc"
+        }
+      }
+    },
+    {
+      "name": "aspect 非法（'0:1'）→ 回退 16:9",
+      "expect": {
+        "ok": true,
+        "warnings": [
+          "image.aspect 缺省/非法"
+        ],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "image",
+          "src": "https://example.com/y.jpg",
+          "aspect": "0:1"
+        }
+      }
+    },
+    {
+      "name": "resizeMode 非法 → 回 cover 并记 warning",
+      "expect": {
+        "ok": true,
+        "warnings": [
+          "image.resizeMode 非法"
+        ],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "image",
+          "src": "https://example.com/z.jpg",
+          "aspect": "16:9",
+          "resizeMode": "fill"
+        }
+      }
+    },
+    {
+      "name": "圆形播放钮（center + circle + opacity + size）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "image",
+          "src": "https://example.com/video.jpg",
+          "aspect": "16:9",
+          "overlays": [
+            {
+              "position": "center",
+              "icon": "play",
+              "text": "",
+              "shape": "circle",
+              "opacity": 0.5,
+              "size": 48,
+              "backgroundColor": {
+                "light": "#FFFFFF",
+                "dark": "#FFFFFF"
+              },
+              "textColor": "#1A1A1A"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "overlay opacity/size 越界 → 钳制 + warning",
+      "expect": {
+        "ok": true,
+        "warnings": [
+          "overlay.opacity 非法",
+          "overlay.size 非法"
+        ],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "image",
+          "src": "https://example.com/ov.jpg",
+          "aspect": "1:1",
+          "overlays": [
+            {
+              "position": "topRight",
+              "text": "越界",
+              "opacity": 9,
+              "size": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "overlays 超过 5 个 → 截断 + warning",
+      "expect": {
+        "ok": true,
+        "warnings": [
+          "image.overlays 超过 5 个"
+        ],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "image",
+          "src": "https://example.com/many.jpg",
+          "aspect": "16:9",
+          "overlays": [
+            {
+              "position": "topLeft",
+              "text": "1"
+            },
+            {
+              "position": "topRight",
+              "text": "2"
+            },
+            {
+              "position": "bottomLeft",
+              "text": "3"
+            },
+            {
+              "position": "bottomRight",
+              "text": "4"
+            },
+            {
+              "position": "center",
+              "text": "5"
+            },
+            {
+              "position": "topLeft",
+              "text": "6"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "data: 内联 SVG（≤512KB 通道）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "image",
+          "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=",
+          "aspect": "1:1"
+        }
+      }
+    }
+  ]
+}

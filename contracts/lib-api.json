@@ -1,0 +1,305 @@
+{
+  "version": 1,
+  "contractVersion": "1.0.2",
+  "surfaceHash": "sha256:6af99819fb9289fed6e7a63459cbfeb35eaa5b4b6862a2218a673d286b97ddcc",
+  "note": "灵枢插件运行时注入面（$lib）的唯一机器可读契约。三方一致：本文件 / runtime/src/sandbox.ts（Node 实跑） / ios/Lingshu/Runtime/*.swift（静态抽取）。字段含义见 contracts/lib-api.md；由 scripts/contract-gates/lib-api.mjs 强制。params 是**参数总数**（带 ? 的表示可选，仅作文档语义）：Node 侧 fn.length 必须等于总数——这要求实现**不给可选参数写 JS 默认值**（`options = {}` 会让 fn.length 截断，两侧口径不再可比）；Swift 侧 block 形参个数同样等于总数（iOS 桥一律全参收下）。contractVersion 是**本契约（$lib 注入面）的版本**，也是插件 `minRuntimeVersion` 的比较基准：宿主实现的契约版本 ≥ 插件声明值才允许安装。它**不是** App 的 MARKETING_VERSION（混用会让整仓插件全变「不可安装」，2026-10 实测踩过），也**不再等于** runtime 的包版本（`runtime/package.json` 的 version，2026-10 解耦，见 docs/adr/0069）：契约版本**只随注入面变更递增**，包版本随每次发布递增，门的 L4 腿要求 **包版本 ≥ 契约版本**、且 iOS 常量与契约版本**恒等**。surfaceHash 是**注入面指纹**（方法名/参数/返回语义/屏蔽全局/库注册表的规范化哈希）——改了面就必须做一次显式决定：递增 contractVersion，或跑 `node scripts/contract-gates/run.mjs --record-surface-hash` 声明「面变了但语义未变」。",
+  "globals": {
+    "console": {
+      "methods": [
+        "log",
+        "warn",
+        "error"
+      ],
+      "arityChecked": false,
+      "note": "Node 侧是宿主 console 的浅拷贝；iOS 侧是自建对象，log/warn/error 同实现（JSON.stringify 后打 [plugin] 前缀）"
+    }
+  },
+  "blockedGlobals": {
+    "names": [
+      "require",
+      "process",
+      "Buffer",
+      "setTimeout",
+      "setInterval",
+      "setImmediate",
+      "clearTimeout",
+      "clearInterval",
+      "clearImmediate"
+    ],
+    "note": "Node 侧在沙箱全局显式置 undefined（sandbox.ts）；iOS 侧 JavaScriptCore 本就不提供这些（setTimeout 等由 JSContext 决定，宿主不注入）——只查 Node 腿，iOS 腿靠「不注入」继承。原生 Buffer 屏蔽后二进制走 $lib.Buffer。"
+  },
+  "namespaces": {
+    "http": {
+      "impl": "runtime/src/runtime/http.ts createHttpAPI",
+      "swift": {
+        "file": "ios/Lingshu/Runtime/HttpBridge.swift",
+        "entry": "makeObject"
+      },
+      "methods": {
+        "get": {
+          "params": [
+            "url",
+            "options?"
+          ],
+          "returns": "Promise<{status,headers,body}>"
+        },
+        "post": {
+          "params": [
+            "url",
+            "data?",
+            "options?"
+          ],
+          "returns": "Promise<{status,headers,body}>"
+        },
+        "del": {
+          "params": [
+            "url",
+            "options?"
+          ],
+          "returns": "Promise<{status,headers,body}>"
+        },
+        "setCookies": {
+          "params": [
+            "url",
+            "cookies"
+          ],
+          "returns": "void"
+        },
+        "getCookies": {
+          "params": [
+            "url"
+          ],
+          "returns": "Array<{name,value,domain?,path?}>"
+        },
+        "deleteCookies": {
+          "params": [
+            "url"
+          ],
+          "returns": "void"
+        }
+      }
+    },
+    "browser": {
+      "impl": "runtime/src/runtime/browser.ts createBrowserAPI",
+      "swift": {
+        "file": "ios/Lingshu/Runtime/BrowserBridge.swift",
+        "entry": "makeObject"
+      },
+      "methods": {
+        "getHtml": {
+          "params": [
+            "url",
+            "options?"
+          ],
+          "returns": "Promise<{status,headers,body}>"
+        }
+      }
+    },
+    "storage": {
+      "impl": "runtime/src/runtime/storage.ts createStorageAPI",
+      "swift": {
+        "file": "ios/Lingshu/Runtime/StorageBridge.swift",
+        "entry": "makeObject"
+      },
+      "methods": {
+        "set": {
+          "params": [
+            "key",
+            "value"
+          ],
+          "returns": "void"
+        },
+        "get": {
+          "params": [
+            "key"
+          ],
+          "returns": "string | undefined"
+        },
+        "remove": {
+          "params": [
+            "key"
+          ],
+          "returns": "void"
+        },
+        "clear": {
+          "params": [],
+          "returns": "void"
+        }
+      }
+    },
+    "settings": {
+      "impl": "runtime/src/runtime/settings.ts createSettingsAPI",
+      "swift": {
+        "file": "ios/Lingshu/Runtime/RunEngine.swift",
+        "entry": "makeSettingsObject"
+      },
+      "methods": {
+        "get": {
+          "params": [
+            "key"
+          ],
+          "returns": "string | boolean | undefined"
+        }
+      }
+    },
+    "util": {
+      "impl": "runtime/src/runtime/util.ts createUtilAPI",
+      "swift": {
+        "file": "ios/Lingshu/Runtime/RunEngine.swift",
+        "entry": "makeUtilObject"
+      },
+      "methods": {
+        "randomUUID": {
+          "params": [],
+          "returns": "string"
+        },
+        "randomInt": {
+          "params": [
+            "min",
+            "max"
+          ],
+          "returns": "number（闭区间，含两端）"
+        },
+        "randomDouble": {
+          "params": [
+            "min",
+            "max"
+          ],
+          "returns": "number（半开区间，不含 max）"
+        }
+      }
+    },
+    "ui": {
+      "impl": "runtime/src/runtime/ui.ts createUiAPI",
+      "swift": {
+        "file": "ios/Lingshu/Runtime/PromptCenter.swift",
+        "entry": "makeUIBridge"
+      },
+      "methods": {
+        "showInputDialog": {
+          "params": [
+            "title",
+            "options?"
+          ],
+          "returns": "Promise<string>"
+        },
+        "confirm": {
+          "params": [
+            "title",
+            "message",
+            "buttons?"
+          ],
+          "returns": "Promise<string>"
+        },
+        "showMessage": {
+          "params": [
+            "text"
+          ],
+          "returns": "void"
+        },
+        "launchUrl": {
+          "params": [
+            "url"
+          ],
+          "returns": "void"
+        }
+      }
+    },
+    "zlib": {
+      "impl": "runtime/src/runtime/zlib.ts createZlibAPI",
+      "swift": {
+        "file": "ios/Lingshu/Runtime/ZlibBridge.swift",
+        "entry": "makeObject"
+      },
+      "methods": {
+        "gzipBase64": {
+          "params": [
+            "text"
+          ],
+          "returns": "string（base64）"
+        },
+        "gunzipBase64": {
+          "params": [
+            "base64"
+          ],
+          "returns": "string（utf8）"
+        }
+      }
+    }
+  },
+  "libraries": {
+    "note": "第三方 JS 库的**加载策略**是契约（两侧注册表必须逐条一致）；库自身的方法面由上游决定，契约只锁 $lib 上的键名与 file/name/strategy/requires。",
+    "runtimeRegistry": {
+      "file": "runtime/src/lib-loader.ts",
+      "const": "LIB_REGISTRY"
+    },
+    "swiftRegistry": {
+      "file": "ios/Lingshu/Runtime/RunEngine.swift",
+      "const": "libRegistry",
+      "keysConst": "libKeys"
+    },
+    "entries": [
+      {
+        "file": "cheerio.min.js",
+        "name": "cheerio",
+        "kind": "umd",
+        "requires": []
+      },
+      {
+        "file": "CryptoJS.min.js",
+        "name": "CryptoJS",
+        "kind": "call",
+        "fn": "createCryptoJS",
+        "requires": []
+      },
+      {
+        "file": "dayjs.js",
+        "name": "dayjs",
+        "kind": "call",
+        "fn": "loadDayjs",
+        "requires": []
+      },
+      {
+        "file": "Buffer.min.js",
+        "name": "Buffer",
+        "kind": "call",
+        "fn": "loadBuffer",
+        "requires": []
+      },
+      {
+        "file": "crypto.js",
+        "name": "crypto",
+        "kind": "call",
+        "fn": "loadCrypto",
+        "requires": []
+      },
+      {
+        "file": "iconv-lite.js",
+        "name": "iconvLite",
+        "kind": "call",
+        "fn": "loadIconv",
+        "requires": []
+      },
+      {
+        "file": "JSEncrypt.min.js",
+        "name": "JSEncrypt",
+        "kind": "call",
+        "fn": "loadJSEncrypt",
+        "requires": [
+          "CryptoJS"
+        ]
+      },
+      {
+        "file": "jsrsasign.js",
+        "name": "jsrsasign",
+        "kind": "globals",
+        "globals": [
+          "KJUR"
+        ],
+        "requires": [
+          "CryptoJS"
+        ]
+      }
+    ]
+  }
+}

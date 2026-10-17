@@ -1,0 +1,210 @@
+{
+  "id": "card-text",
+  "title": "text 节点：字体三字段 + 对齐/行数/缩放 + 格式化值",
+  "note": "font.size 支持语义名或数字；weight 同 Egern；minScale 越界由宿主钳制；text 接受直串或格式化值。",
+  "cases": [
+    {
+      "name": "text 全字段（语义字号 + 粗体 + 居中 + 2 行 + 缩放）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 2,
+          "depth": 2,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "children": [
+            {
+              "type": "text",
+              "text": "标题文本",
+              "font": {
+                "size": "headline",
+                "weight": "bold",
+                "family": "PingFang SC"
+              },
+              "textColor": {
+                "light": "#111111",
+                "dark": "#FFFFFF"
+              },
+              "textAlign": "center",
+              "maxLines": 2,
+              "minScale": 0.8,
+              "flex": 1,
+              "target": {
+                "action": "list",
+                "url": "/tag/demo/",
+                "category": "c=doujin&o=mr",
+                "channel": "video-list"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "font.size 用数字（pt）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "14pt 数字字号",
+          "font": {
+            "size": 14
+          }
+        }
+      }
+    },
+    {
+      "name": "text 接受格式化值（count）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": {
+            "value": 12345,
+            "format": "count"
+          }
+        }
+      }
+    },
+    {
+      "name": "textAlign right + maxLines 1",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "右对齐",
+          "textAlign": "right",
+          "maxLines": 1
+        }
+      }
+    },
+    {
+      "name": "格式化值五种（duration/count/relative/date/datetime）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 6,
+          "depth": 2,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "direction": "column",
+          "children": [
+            {
+              "type": "text",
+              "text": {
+                "value": 750,
+                "format": "duration"
+              }
+            },
+            {
+              "type": "text",
+              "text": {
+                "value": 12000,
+                "format": "count"
+              }
+            },
+            {
+              "type": "text",
+              "text": {
+                "value": 1760000000000,
+                "format": "relative"
+              }
+            },
+            {
+              "type": "text",
+              "text": {
+                "value": 1760000000000,
+                "format": "date"
+              }
+            },
+            {
+              "type": "text",
+              "text": {
+                "value": 1760000000000,
+                "format": "datetime"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "minScale 越界仍合法（宿主钳制，不算结构非法）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "越界缩放",
+          "minScale": 3
+        }
+      }
+    },
+    {
+      "name": "卡片根直接用 text（非容器）→ 合法",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "单文本卡"
+        }
+      }
+    }
+  ]
+}

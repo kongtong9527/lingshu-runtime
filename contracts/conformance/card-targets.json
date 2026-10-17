@@ -1,0 +1,275 @@
+{
+  "id": "card-targets",
+  "title": "CardTarget：六种跳转 + noop + 写侧 invoke",
+  "note": "PageJumpTarget 六种 action；list 的 url/category 至少其一（宿主优先 url），filters 为该落地页专属筛选组，channel 为列表通道标识（宿主原样透传、插件不得靠 URL 正则回推）。",
+  "cases": [
+    {
+      "name": "list：url + category + channel",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "进列表",
+          "target": {
+            "action": "list",
+            "url": "/videos/page/2/",
+            "category": "c=doujin&o=mr",
+            "channel": "video-list"
+          }
+        }
+      }
+    },
+    {
+      "name": "list：只给 category（内部查询串，无原页按钮）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "只看查询串",
+          "target": {
+            "action": "list",
+            "category": "c=doujin"
+          }
+        }
+      }
+    },
+    {
+      "name": "list：带 filters（落地页筛选栏）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "带筛选的落地页",
+          "target": {
+            "action": "list",
+            "url": "/videos/",
+            "filters": [
+              {
+                "name": "题材",
+                "key": "genre",
+                "type": "select",
+                "items": [
+                  {
+                    "id": "a",
+                    "name": "题材A"
+                  },
+                  {
+                    "id": "b",
+                    "name": "题材B"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "search：query",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "搜作者",
+          "target": {
+            "action": "search",
+            "query": "作者名"
+          }
+        }
+      }
+    },
+    {
+      "name": "detail / reading / play 三种 url 形态",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 4,
+          "depth": 2,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "direction": "row",
+          "children": [
+            {
+              "type": "text",
+              "text": "详情",
+              "target": {
+                "action": "detail",
+                "url": "https://example.com/v/1"
+              }
+            },
+            {
+              "type": "text",
+              "text": "阅读",
+              "target": {
+                "action": "reading",
+                "url": "https://example.com/read/1"
+              }
+            },
+            {
+              "type": "text",
+              "text": "播放",
+              "target": {
+                "action": "play",
+                "url": "https://example.com/play/1"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "categories：无参跳分类页",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "分类",
+          "target": {
+            "action": "categories"
+          }
+        }
+      }
+    },
+    {
+      "name": "noop：拦截冒泡不可点",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "纯展示",
+          "target": {
+            "action": "noop"
+          }
+        }
+      }
+    },
+    {
+      "name": "invoke：写侧（call 最小形态）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "text",
+          "text": "点赞",
+          "target": {
+            "action": "invoke",
+            "call": {
+              "function": "toggleLike",
+              "params": {
+                "id": "v1"
+              },
+              "stateKey": "liked"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "CardColor 双写与语义名混用",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 4,
+          "depth": 2,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "backgroundColor": {
+            "light": "#FFFFFF",
+            "dark": "#1C1C1E"
+          },
+          "children": [
+            {
+              "type": "text",
+              "text": "语义名色",
+              "textColor": "$accent"
+            },
+            {
+              "type": "text",
+              "text": "8 位 Hex",
+              "textColor": "#FF000080"
+            },
+            {
+              "type": "text",
+              "text": "rgba",
+              "textColor": "rgba(255,0,0,0.5)"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

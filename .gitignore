@@ -1,0 +1,13 @@
+# 依赖与生成物（dist 是构建产物，不入库；见 CONTRIBUTING）
+node_modules/
+dist/
+*.tsbuildinfo
+
+# 运行时产物
+.lingshu-storage.json
+
+# 编辑器与系统
+.DS_Store
+.idea/
+.vscode/
+*.swp

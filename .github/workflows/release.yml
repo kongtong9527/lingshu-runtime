@@ -1,0 +1,122 @@
+# Release the runtime package to npm via **trusted publishing** (OIDC) — no long-lived token anywhere.
+#
+# This file is injected from the upstream template on every release. Do not edit it in this repository —
+# local edits are overwritten and cannot be reviewed (see CONTRIBUTING.md §1); propose workflow changes
+# upstream through an issue or a pull-request description instead.
+#
+# Why `workflow_dispatch` only: every snapshot push also creates a `vX.Y.Z` tag, so a `push: tags`
+# trigger would try to publish on *every* snapshot. The package version is the **runtime contract
+# version**, which only changes when the contract changes — that is a deliberate, human decision.
+#
+# The npm side must have a trusted publisher configured for this exact workflow **filename**
+# (`release.yml`), the repository, and `npm publish` among the allowed actions. A freshly created
+# trusted publisher must complete its first successful publish within 2 days or it expires.
+# See https://docs.npmjs.com/trusted-publishers
+
+name: Release to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Only pack and verify; do not publish
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write # required for OIDC: npm exchanges it for a short-lived publish credential
+
+concurrency:
+  group: release-npm
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to npm (trusted publishing)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false # never cache in a release build
+
+      # Trusted publishing needs npm >= 11.5.1. Fail loudly here instead of with a confusing ENEEDAUTH.
+      - name: Check the npm CLI supports trusted publishing
+        run: |
+          v=$(npm --version)
+          echo "npm $v"
+          node -e '
+            const [a, b, c] = process.argv[1].split(".").map(Number)
+            const ok = a > 11 || (a === 11 && (b > 5 || (b === 5 && c >= 1)))
+            process.exit(ok ? 0 : 1)
+          ' "$v" || { echo "::error::trusted publishing requires npm >= 11.5.1 (got $v)"; exit 1; }
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Build · contract gates · tests
+        run: |
+          npm run build
+          node scripts/contract-gates/run.mjs
+          npm test
+
+      - name: Resolve the version and check the registry
+        id: ver
+        run: |
+          V=$(node -p "require('./package.json').version")
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          if npm view "lingshu-runtime@$V" version >/dev/null 2>&1; then
+            echo "already=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "already=no" >> "$GITHUB_OUTPUT"
+          fi
+          echo "package.json version = $V"
+
+      # A published version can never be republished. Bumping the **package version** here is all it
+      # takes: the contract version (`contracts/lib-api.json` `contractVersion`) is a *different*
+      # series — it only moves when the `$lib` injection surface changes, and gate 2's L4 leg only
+      # requires package version >= contract version (iOS `PluginRuntimeContract.version` must equal
+      # the contract version). See docs/adr/0069.
+      - name: Refuse to republish an existing version
+        if: steps.ver.outputs.already == 'yes'
+        run: |
+          echo '::error::lingshu-runtime@${{ steps.ver.outputs.version }} is already on npm — bump runtime/package.json version (the package series, NOT the contract version unless the $lib surface changed) and release a new snapshot first.'
+          exit 1
+
+      - name: Pack (dry run)
+        if: ${{ inputs.dry_run }}
+        run: npm pack --dry-run
+
+      # Provenance is generated **automatically** by trusted publishing — do not pass `--provenance`
+      # (that flag is for token-based CI publishing and is rejected outside a supported provider).
+      - name: Publish
+        if: ${{ !inputs.dry_run }}
+        run: npm publish --access public
+
+      # A fresh version is not instantly visible: the registry may serve a `0.0.0-stage` placeholder
+      # while the tarball is processed (measured: ~7 minutes for a brand-new package). Poll instead of
+      # failing — and never retry the publish, the version is already taken at that point.
+      - name: Verify the published package
+        if: ${{ !inputs.dry_run }}
+        run: |
+          V="${{ steps.ver.outputs.version }}"
+          for i in $(seq 1 30); do
+            if npm view "lingshu-runtime@$V" version >/dev/null 2>&1; then
+              echo "registry serves $V (attempt $i)"
+              cd "$(mktemp -d)"
+              npx -y "lingshu-runtime@$V" --help
+              exit 0
+            fi
+            echo "attempt $i: $V is not on the registry yet…"
+            sleep 20
+          done
+          echo "::warning::lingshu-runtime@$V still not visible after ~10 minutes — check the package page (a brand-new package sits in a '0.0.0-stage' placeholder while it is processed)"

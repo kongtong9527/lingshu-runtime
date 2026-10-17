@@ -1,0 +1,175 @@
+{
+  "id": "card-actionbar-divider-spacer",
+  "title": "actionBar / divider / spacer 节点",
+  "note": "actionBar 最多渲染前 4 项；带 invoke target 的项渲染为可点按钮，无 target 纯展示跟整卡走。divider 全宽细线，spacer 无 length 即弹性。",
+  "cases": [
+    {
+      "name": "actionBar 全字段（4 项 + 写侧项）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "actionBar",
+          "flex": 1,
+          "items": [
+            {
+              "icon": "comment",
+              "text": "7"
+            },
+            {
+              "icon": "repost",
+              "text": "307"
+            },
+            {
+              "icon": "heart",
+              "text": {
+                "value": 2000,
+                "format": "count"
+              },
+              "target": {
+                "action": "invoke",
+                "call": {
+                  "function": "toggleLike",
+                  "params": {
+                    "id": "v1"
+                  }
+                },
+                "effect": {
+                  "kind": "count",
+                  "id": "like:v1"
+                }
+              }
+            },
+            {
+              "icon": "eye",
+              "text": {
+                "value": 594600,
+                "format": "count"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "actionBar 单项（最少合法形态）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "actionBar",
+          "items": [
+            {
+              "icon": "none",
+              "text": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "divider（缺省色）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "divider"
+        }
+      }
+    },
+    {
+      "name": "divider（显式色，榜单行之间）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "divider",
+          "color": "$separator"
+        }
+      }
+    },
+    {
+      "name": "spacer（弹性，无 length）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 4,
+          "depth": 2,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "direction": "row",
+          "children": [
+            {
+              "type": "text",
+              "text": "左"
+            },
+            {
+              "type": "spacer"
+            },
+            {
+              "type": "text",
+              "text": "右"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "spacer（固定高度 length）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 1,
+          "depth": 1,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "spacer",
+          "length": 12
+        }
+      }
+    }
+  ]
+}

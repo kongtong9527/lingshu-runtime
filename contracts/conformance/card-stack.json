@@ -1,0 +1,198 @@
+{
+  "id": "card-stack",
+  "title": "stack 节点：布局四要素 + 主轴/交叉轴 + 背景与圆角",
+  "note": "direction 缺省 row；alignItems 缺省 center（交叉轴）；justifyContent 有值即撑满整行（主轴）。padding 三形态。",
+  "cases": [
+    {
+      "name": "stack 全字段（column 容器）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 3,
+          "depth": 2,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "direction": "column",
+          "alignItems": "start",
+          "gap": 8,
+          "padding": 12,
+          "backgroundColor": "$surface",
+          "borderRadius": 12,
+          "justifyContent": "center",
+          "flex": 1,
+          "children": [
+            {
+              "type": "text",
+              "text": "标题"
+            },
+            {
+              "type": "divider"
+            }
+          ],
+          "target": {
+            "action": "detail",
+            "url": "https://example.com/v/1"
+          }
+        }
+      }
+    },
+    {
+      "name": "padding 双元 [v,h]",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 2,
+          "depth": 2,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "padding": [
+            8,
+            12
+          ],
+          "children": [
+            {
+              "type": "spacer"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "padding 四元 [t,r,b,l]",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 2,
+          "depth": 2,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "padding": [
+            4,
+            8,
+            4,
+            8
+          ],
+          "children": [
+            {
+              "type": "spacer",
+              "length": 4
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "direction row + alignItems center（缺省值显式写）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 3,
+          "depth": 2,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "direction": "row",
+          "alignItems": "center",
+          "gap": 6,
+          "borderRadius": "auto",
+          "children": [
+            {
+              "type": "avatar",
+              "src": "https://example.com/avatar.png",
+              "size": 32
+            },
+            {
+              "type": "text",
+              "text": "作者名"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "justifyContent end（撑满整行右对齐）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 2,
+          "depth": 2,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "direction": "row",
+          "justifyContent": "end",
+          "children": [
+            {
+              "type": "spacer"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "嵌套 stack（三层，测 depth 计数）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 4,
+          "depth": 4,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "direction": "column",
+          "children": [
+            {
+              "type": "stack",
+              "direction": "row",
+              "children": [
+                {
+                  "type": "stack",
+                  "direction": "column",
+                  "children": [
+                    {
+                      "type": "text",
+                      "text": "深层文本"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+# CI for the published runtime snapshot.
+#
+# This file is injected from the upstream template on every release. Do not edit it in this repository —
+# local edits are overwritten and cannot be reviewed (see CONTRIBUTING.md §1); propose workflow changes
+# upstream through an issue or a pull-request description instead.
+#
+# Layout note: in this repository the runtime *is* the repository root (`src/`, `contracts/`,
+# `scripts/contract-gates/`), so the monorepo's `npm run -w runtime <script>` calls become plain
+# `npm run <script>` here, and the four contract gates are invoked directly.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test-gates:
+    name: Build · contract gates · tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20 # Node >= 18 is supported; CI pins the current LTS
+          cache: npm
+
+      # `npm ci` needs the lockfile that ships with the snapshot; the fallback keeps CI usable from a
+      # checkout that has none (a fork that dropped it, for example).
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      # Gates 2 and 3 read the compiled output, so build first.
+      - name: Build (tsc → dist/)
+        run: npm run build
+
+      # Gate 0 naming · gate 1 field sets · gate 2 $lib signatures · gate 3 conformance corpus.
+      # Missing legs are skipped and reported by design: the Swift legs (CardModels.swift, the $lib bridge
+      # and the iOS conformance test bundle) live in the iOS repository, which is a separate snapshot.
+      # CONTRACT_REQUIRE_ALL is deliberately NOT set here: that flag means "all three legs must exist" and
+      # is only valid where the Swift host is in the same tree.
+      - name: Contract gates
+        run: node scripts/contract-gates/run.mjs
+
+      - name: Tests (vitest)
+        run: npm test

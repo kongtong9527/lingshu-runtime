@@ -1,0 +1,384 @@
+{
+  "id": "card-limits",
+  "title": "安全红线：节点数 / 深度 / 图片数超限只截断不回退",
+  "note": "节点总数 ≤50、嵌套深 ≤5、图片（含 avatar/grid 内 image）≤6、卡高 ≤600pt。超限由宿主截断显示并记 warning，**不是**结构非法——ok 仍为 true，整卡不回退。",
+  "cases": [
+    {
+      "name": "节点数 51 → 截断 + warning",
+      "expect": {
+        "ok": true,
+        "warnings": [
+          "节点数 51 超过 50"
+        ],
+        "counts": {
+          "nodes": 51,
+          "depth": 2,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "direction": "column",
+          "children": [
+            {
+              "type": "text",
+              "text": "1"
+            },
+            {
+              "type": "text",
+              "text": "2"
+            },
+            {
+              "type": "text",
+              "text": "3"
+            },
+            {
+              "type": "text",
+              "text": "4"
+            },
+            {
+              "type": "text",
+              "text": "5"
+            },
+            {
+              "type": "text",
+              "text": "6"
+            },
+            {
+              "type": "text",
+              "text": "7"
+            },
+            {
+              "type": "text",
+              "text": "8"
+            },
+            {
+              "type": "text",
+              "text": "9"
+            },
+            {
+              "type": "text",
+              "text": "10"
+            },
+            {
+              "type": "text",
+              "text": "11"
+            },
+            {
+              "type": "text",
+              "text": "12"
+            },
+            {
+              "type": "text",
+              "text": "13"
+            },
+            {
+              "type": "text",
+              "text": "14"
+            },
+            {
+              "type": "text",
+              "text": "15"
+            },
+            {
+              "type": "text",
+              "text": "16"
+            },
+            {
+              "type": "text",
+              "text": "17"
+            },
+            {
+              "type": "text",
+              "text": "18"
+            },
+            {
+              "type": "text",
+              "text": "19"
+            },
+            {
+              "type": "text",
+              "text": "20"
+            },
+            {
+              "type": "text",
+              "text": "21"
+            },
+            {
+              "type": "text",
+              "text": "22"
+            },
+            {
+              "type": "text",
+              "text": "23"
+            },
+            {
+              "type": "text",
+              "text": "24"
+            },
+            {
+              "type": "text",
+              "text": "25"
+            },
+            {
+              "type": "text",
+              "text": "26"
+            },
+            {
+              "type": "text",
+              "text": "27"
+            },
+            {
+              "type": "text",
+              "text": "28"
+            },
+            {
+              "type": "text",
+              "text": "29"
+            },
+            {
+              "type": "text",
+              "text": "30"
+            },
+            {
+              "type": "text",
+              "text": "31"
+            },
+            {
+              "type": "text",
+              "text": "32"
+            },
+            {
+              "type": "text",
+              "text": "33"
+            },
+            {
+              "type": "text",
+              "text": "34"
+            },
+            {
+              "type": "text",
+              "text": "35"
+            },
+            {
+              "type": "text",
+              "text": "36"
+            },
+            {
+              "type": "text",
+              "text": "37"
+            },
+            {
+              "type": "text",
+              "text": "38"
+            },
+            {
+              "type": "text",
+              "text": "39"
+            },
+            {
+              "type": "text",
+              "text": "40"
+            },
+            {
+              "type": "text",
+              "text": "41"
+            },
+            {
+              "type": "text",
+              "text": "42"
+            },
+            {
+              "type": "text",
+              "text": "43"
+            },
+            {
+              "type": "text",
+              "text": "44"
+            },
+            {
+              "type": "text",
+              "text": "45"
+            },
+            {
+              "type": "text",
+              "text": "46"
+            },
+            {
+              "type": "text",
+              "text": "47"
+            },
+            {
+              "type": "text",
+              "text": "48"
+            },
+            {
+              "type": "text",
+              "text": "49"
+            },
+            {
+              "type": "text",
+              "text": "50"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "嵌套深 6 → 截断 + warning",
+      "expect": {
+        "ok": true,
+        "warnings": [
+          "嵌套深 6 超过 5"
+        ],
+        "counts": {
+          "nodes": 6,
+          "depth": 6,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "children": [
+            {
+              "type": "stack",
+              "children": [
+                {
+                  "type": "stack",
+                  "children": [
+                    {
+                      "type": "stack",
+                      "children": [
+                        {
+                          "type": "stack",
+                          "children": [
+                            {
+                              "type": "text",
+                              "text": "第 6 层"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "图片数 7（含 avatar）→ 只显前 N + warning",
+      "expect": {
+        "ok": true,
+        "warnings": [
+          "图片数 7 超过 6"
+        ],
+        "counts": {
+          "nodes": 8,
+          "depth": 2,
+          "images": 7
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "direction": "row",
+          "children": [
+            {
+              "type": "avatar",
+              "src": "https://example.com/av.png",
+              "size": 40
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/1.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/2.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/3.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/4.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/5.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/6.jpg",
+              "aspect": "1:1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "恰好到上限（50 节点 / 5 层 / 6 图）→ 无 warning",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 7,
+          "depth": 2,
+          "images": 6
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "children": [
+            {
+              "type": "image",
+              "src": "https://example.com/1.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/2.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/3.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/4.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/5.jpg",
+              "aspect": "1:1"
+            },
+            {
+              "type": "image",
+              "src": "https://example.com/6.jpg",
+              "aspect": "1:1"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

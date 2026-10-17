@@ -1,0 +1,139 @@
+{
+  "id": "card-root",
+  "title": "根信封与整卡回退（Q10/Q20）",
+  "note": "version 必须为 1、root 必须是已知节点 → 否则宿主整卡回退到老卡；未知 type 只跳该节点、不回退整卡。",
+  "cases": [
+    {
+      "name": "最小合法卡（stack 单节点）",
+      "expect": {
+        "ok": true,
+        "warnings": [
+          "image.aspect"
+        ],
+        "counts": {
+          "nodes": 2,
+          "depth": 2,
+          "images": 1
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "children": [
+            {
+              "type": "image",
+              "src": "https://example.com/a.jpg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "带 accessibilityLabel 的合法卡",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 2,
+          "depth": 2,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "accessibilityLabel": "示例卡片无障碍标签",
+        "root": {
+          "type": "stack",
+          "children": [
+            {
+              "type": "text",
+              "text": "正文"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "version 非 1 → 整卡回退",
+      "expect": {
+        "ok": false,
+        "warnings": []
+      },
+      "card": {
+        "version": 2,
+        "root": {
+          "type": "stack",
+          "children": []
+        }
+      }
+    },
+    {
+      "name": "缺 root → 整卡回退",
+      "expect": {
+        "ok": false,
+        "warnings": []
+      },
+      "card": {
+        "version": 1
+      }
+    },
+    {
+      "name": "未知节点类型 → 不整卡回退（跳该节点）",
+      "expect": {
+        "ok": true,
+        "warnings": [],
+        "counts": {
+          "nodes": 3,
+          "depth": 2,
+          "images": 0
+        }
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "stack",
+          "children": [
+            {
+              "type": "未来节点",
+              "whatever": [
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "type": "text",
+              "text": "未知节点旁边的正常节点"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "未知节点当 root → 整卡回退（与 iOS shouldFallback 同口径）",
+      "expect": {
+        "ok": false,
+        "warnings": []
+      },
+      "card": {
+        "version": 1,
+        "root": {
+          "type": "未来节点",
+          "x": 1
+        }
+      }
+    },
+    {
+      "name": "root 不是对象 → 整卡回退",
+      "expect": {
+        "ok": false,
+        "warnings": []
+      },
+      "card": {
+        "version": 1,
+        "root": "stack"
+      }
+    }
+  ]
+}
