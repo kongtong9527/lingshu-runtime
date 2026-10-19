@@ -56,5 +56,5 @@ node scripts/contract-gates/conformance.mjs --record     # 只补缺失的 expec
 | --- | --- | --- |
 | `ListItem` 信封本体（`tags`/`badges` 归一化、`coverWidth/Height` 真实比语义） | 老卡字段没有三方门，靠 iOS `ListItemBadges.swift` 单源纪律 | 下一个契约批次 |
 | `ContentBlock` 详情/阅读块、`Listing`/`PluginContext` 等插件接口 | 同上（`types.ts` 已有类型，无 schema/语料） | 下一个契约批次 |
-| 筛选组联动求值（ADR-0063）的**行为**等价 | 语料只覆盖 `CategoryGroup` 的字段集与解码，不覆盖显隐/清子求值 | 各端自带单测（`FilterStateTests` / `filters-linkage.test.ts` / `FilterLinkageTests`） |
+| 筛选组联动求值的**行为**等价 | 语料只覆盖 `CategoryGroup` 的字段集与解码，不覆盖显隐/清子求值 | 各端自带单测（`FilterStateTests` / `filters-linkage.test.ts` / `FilterLinkageTests`） |
 | codegen（由 schema 生成 Swift 模型 + 文档字段表） | 暂无；先用四道门把漂移钉死 | Phase 4 可选 |

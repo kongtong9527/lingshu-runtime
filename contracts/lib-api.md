@@ -11,10 +11,10 @@
 - **单位一律毫秒**（`timeout`）。历史上出过「秒/毫秒」误判，故单列此条；iOS 侧由 `PluginTimeout.seconds` 归一（≥1000 按毫秒，缺省 http 60s / browser 30s）。
 - **本条契约只锁「函数名 + 参数个数 + 返回语义」**，不锁参数对象的字段集（那是各 API 的用法文档范围）；跨端字段级差异走 conformance 语料。
 - **`contractVersion` 是本契约（`$lib` 注入面）的版本号**（[`lib-api.json`](lib-api.json) 顶层字段）。
-  **它同时是插件 `manifest.json` 里 `minRuntimeVersion` 的比较基准**（ADR-0009：宿主实现的契约版本 ≥ 插件声明值才允许安装）。
+  **它同时是插件 `manifest.json` 里 `minRuntimeVersion` 的比较基准**（宿主实现的契约版本 ≥ 插件声明值才允许安装）。
   **它不是 App 的 `MARKETING_VERSION`**——两套号段不同源（App 走 `0.1.x`，契约走 `1.0.x`），
   混用会让 `1.0.x > 0.1.x` 恒成立 ⇒ 仓库页**整仓插件恒显示「不可安装」**，不崩不报错（2026-10 实测：公开插件仓 3 个插件全部点不动）。
-- **三条版本号段互不同源，别互相推**（2026-10 解耦，见 [ADR-0069](../docs/adr/0069-contract-version-vs-package-version.md)）：
+- **三条版本号段互不同源，别互相推**（2026-10 解耦，见内部设计记录）：
 
   | 号段 | 住哪 | 什么时候动 | 谁比它 |
   | --- | --- | --- | --- |
@@ -26,7 +26,7 @@
   `runtime/package.json` 的版本 **≥** 契约版本（包可以领先，**不得落后**——落后 = 包发出去了却少注入一个方法）；
   以及**注入面指纹**（`surfaceHash`）——改了面就必须做一次显式决定：递增 `contractVersion`，
   或跑 `node scripts/contract-gates/run.mjs --record-surface-hash` 声明「面变了但语义未变」。
-- **插件侧字段仍叫 `minRuntimeVersion`**（不是 `minContractVersion`）：它已随 ADR-0009 发布给插件作者与技能包，
+- **插件侧字段仍叫 `minRuntimeVersion`**（不是 `minContractVersion`）：它已随发布给插件作者与技能包，
   语义没变（「我需要的最低宿主版本」）。改名的收益只是措辞对称，代价是 31 个插件 + iOS 模型 + 技能模板全动一遍。
   读它的时候记住：**比的是上表的契约版本**。
 
@@ -60,7 +60,7 @@ $lib = {
 - `options`：`{ headers?, timeout?（毫秒）, rejectUnauthorized?, responseType?: 'text'|'base64', contentType?（仅 post）}`。
 - `data`：字符串原样透传、`Uint8Array`/`$lib.Buffer` 按字节发出、对象 `JSON.stringify`。
 - cookie jar：进程内按域隔离；显式 `headers.Cookie` 优先于 jar。跨 run 共享靠宿主注入同一个 jar（登录态延续）。
-- 挑战识别在宿主（ADR-0052）：命中即抛 `code == 'CHALLENGE'`，插件不得自写判定。
+- 挑战识别在宿主：命中即抛 `code == 'CHALLENGE'`，插件不得自写判定。
 
 ### $lib.browser
 
@@ -68,7 +68,7 @@ $lib = {
 | --- | --- |
 | `$lib.browser.getHtml(url, options?)` | `Promise<{status, headers, body}>` |
 
-无浏览器腿时恒抛 `CHALLENGE`（ADR-0043）；插件侧重抓已退役（ADR-0060）——插件纯直连、挑战直抛，通道只服务宿主验证链。
+无浏览器腿时恒抛 `CHALLENGE`；插件侧重抓已退役——插件纯直连、挑战直抛，通道只服务宿主验证链。
 
 ### $lib.storage
 
@@ -79,7 +79,7 @@ $lib = {
 | `$lib.storage.remove(key)` | `void` |
 | `$lib.storage.clear()` | `void` |
 
-文件持久 KV（插件自管）。值必须是字符串（对象走 `JSON.stringify`）。与 `$lib.settings` 严格分家（ADR-0004）。
+文件持久 KV（插件自管）。值必须是字符串（对象走 `JSON.stringify`）。与 `$lib.settings` 严格分家。
 
 ### $lib.settings
 
@@ -108,7 +108,7 @@ $lib = {
 | `$lib.ui.showMessage(text)` | `void` |
 | `$lib.ui.launchUrl(url)` | `void` |
 
-插件 run 中途直问用户（ADR-0006）。无 headed 宿主时：`showInputDialog`/`confirm` **清晰报错**（不静默降级），`showMessage`/`launchUrl` 静默 no-op。窄口径——结构化选择器是宿主编排的多 run 流，不进 `$lib.ui`。
+插件 run 中途直问用户。无 headed 宿主时：`showInputDialog`/`confirm` **清晰报错**（不静默降级），`showMessage`/`launchUrl` 静默 no-op。窄口径——结构化选择器是宿主编排的多 run 流，不进 `$lib.ui`。
 
 ### $lib.zlib
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "灵枢卡片 DSL v1（Card DSL v1）",
-  "description": "列表项自定义卡片（ListItem.card）的唯一机器可读契约，对应 ADR-0050。字段集三端一致（本 schema / runtime/src/types.ts / ios/Lingshu/Models/CardModels.swift），由 scripts/contract-gates 强制。结构不合法（version≠1 或 root 非已知节点）→ 宿主整卡回退；未知 type 节点 → 跳过该节点不炸整卡；字段值非法（如 aspect='abc'）→ 宿主按各字段声明的缺省回退并记 warning，不算结构非法。注意：本 schema 只锁**结构**（字段名与类型），不锁取值合法性——容差回退是刻意设计，语料见 conformance/。",
+  "description": "列表项自定义卡片（ListItem.card）的唯一机器可读契约，对应。字段集三端一致（本 schema / runtime/src/types.ts / ios/Lingshu/Models/CardModels.swift），由 scripts/contract-gates 强制。结构不合法（version≠1 或 root 非已知节点）→ 宿主整卡回退；未知 type 节点 → 跳过该节点不炸整卡；字段值非法（如 aspect='abc'）→ 宿主按各字段声明的缺省回退并记 warning，不算结构非法。注意：本 schema 只锁**结构**（字段名与类型），不锁取值合法性——容差回退是刻意设计，语料见 conformance/。",
   "$ref": "#/$defs/CardDSL",
   "$defs": {
     "CardDSL": {
@@ -848,11 +848,11 @@
       "additionalProperties": false
     },
     "PageJumpTarget": {
-      "description": "结构化跳转目标（ADR-0025）：插件声明「点这里去哪」，宿主驱动内部导航。",
+      "description": "结构化跳转目标：插件声明「点这里去哪」，宿主驱动内部导航。",
       "oneOf": [
         {
           "type": "object",
-          "description": "list：列表（category 组合查询串 / url 页面通道，二者至少其一）。channel 为列表通道标识（ADR-0064），宿主原样透传进 PluginContext.channel。",
+          "description": "list：列表（category 组合查询串 / url 页面通道，二者至少其一）。channel 为列表通道标识，宿主原样透传进 PluginContext.channel。",
           "properties": {
             "action": {
               "const": "list"
@@ -963,7 +963,7 @@
     },
     "ImageEncryption": {
       "type": "object",
-      "description": "图片解密参数（ADR-0003）：缺省继承整卡 metadata 管线。",
+      "description": "图片解密参数：缺省继承整卡 metadata 管线。",
       "properties": {
         "algorithm": {
           "type": "string"
@@ -1009,7 +1009,7 @@
     },
     "CategoryGroup": {
       "type": "object",
-      "description": "筛选组（ADR-0021/0063/0066）：卡片跳转目标可携带落地页筛选栏。key 在同组数组内必须唯一。",
+      "description": "筛选组：卡片跳转目标可携带落地页筛选栏。key 在同组数组内必须唯一。",
       "properties": {
         "name": {
           "type": "string"
@@ -1058,7 +1058,7 @@
         },
         "dependsOn": {
           "type": "string",
-          "description": "联动父组 key（ADR-0063）；缺省 = 独立静态组。"
+          "description": "联动父组 key；缺省 = 独立静态组。"
         },
         "visibleWhen": {
           "$ref": "#/$defs/CategoryVisibleCondition"

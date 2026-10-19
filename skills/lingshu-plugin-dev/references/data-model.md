@@ -15,14 +15,14 @@ interface ListItem {
   url: string                 // 详情页 URL（传给 fetchDetail）
   publishTime?: number        // 发布时间戳（毫秒）
   metadata?: Record<string, any>  // 自定义扩展（播放数、作者、图片传输参数等）
-  target?: PageJumpTarget     // 点击行为（ADR-0025）。缺省 = 进详情页；合集/专题类条目带
+  target?: PageJumpTarget     // 点击行为。缺省 = 进详情页；合集/专题类条目带
                               // { action:'list', url } → 宿主以该 URL 再调 fetchList（递归列表，
                               // 支持任意深度嵌套导航/合集）
   tags?: ListTag[]            // 标题下方标签行（可选，老卡专用）。字符串简写归一 { name }；
                               // 空/缺省隐藏整行，宿主最多取前 6 个，单行横滑。全文见下文「列表标签与封面角标」
   badges?: CoverBadges        // 封面四角信息位（可选，老卡专用，有 card 时忽略）。只压图，
                               // 无封面不渲染，纯展示不可点。全文见下文「列表标签与封面角标」
-  card?: CardDSL              // 自定义列表项卡片（可选，ADR-0050）。有即渲染、无即回退老卡；
+  card?: CardDSL              // 自定义列表项卡片（可选）。有即渲染、无即回退老卡；
                               // 每项自带现算 DSL JSON。全文见 `card-dsl.md`
 }
 ```
@@ -151,12 +151,12 @@ interface ArticleDetail {
 | `heading` | `content: string`, `level: 1\|2\|3\|4\|5\|6` | — | 标题 |
 | `link` | `content: string`, `url: string` | `target?: PageJumpTarget` | 链接。默认为外链（浏览器打开）；带 `target` 时宿主优先内部导航（与 tags/recommendations 同款「有 target 优先、url 退为外链回退」） |
 | `chapter` | `content: Array<{title: string; url: string}>` | `coverUrl?: string`（条目级章节封面，缺省回退纯文字）、`target?: PageJumpTarget` | 章节列表（漫画/小说专用，含标题和阅读页 URL）。有 `coverUrl` 的项宿主渲染横向缩略图行，无图项纯色占位对齐行高；全块无图回退纵向文字列表 |
-| `episodes` | `lines: Array<{name: string; episodes: Array<{title; url; target?}>}>` | `poster?: string`（块级播放占位底图）、`coverUrl?: string`（条目级剧集封面，缺省回退纯文字） | 影视「线路 × 剧集」：每条线路含若干剧集，**剧集 url 指向播放页（非媒体 URL）**，宿主点选后经 `fetchPlayUrl` 就地解析播放（ADR-0020）。有 `coverUrl` 的线路宿主渲染横向缩略图行（左 16:9 图右标题），无图项纯色占位对齐；全块无图回退文字宫格 |
+| `episodes` | `lines: Array<{name: string; episodes: Array<{title; url; target?}>}>` | `poster?: string`（块级播放占位底图）、`coverUrl?: string`（条目级剧集封面，缺省回退纯文字） | 影视「线路 × 剧集」：每条线路含若干剧集，**剧集 url 指向播放页（非媒体 URL）**，宿主点选后经 `fetchPlayUrl` 就地解析播放。有 `coverUrl` 的线路宿主渲染横向缩略图行（左 16:9 图右标题），无图项纯色占位对齐；全块无图回退文字宫格 |
 | `tags` | `content: Array<{name: string; url: string}>` | `title?: string` | 标签/chip 流（标签名称与标签页链接）。`title` 可选（2026-08）：区标题，缺省宿主渲染「标签」；用于**独立语义的 chip 组**（如 manga_site_c 作者区 `{type:'tags', title:'作者', content:[作者 chips]}`——样式同标签、语义独立，作者项 target 指向作者列表页） |
 | `tagGroups` | `groups: Array<{name: string; content: Array<{name: string; url: string}>}>` | `title?: string` | 标签分组块（详情页一行一种类型，类型名动态）。`title` 为块大标题，缺省宿主渲染「标签」；`groups` 每项为一个类型行，`name` 为类型名（动态字符串，如 女性/男性/其他，站点各异），`content` 为该类型下的标签项（与 `tags` 项同形，跳转语义同 `tags`）。空 `groups` 时宿主隐藏整块 |
 | `recommendations` | `content: Array<{title: string; url: string; coverUrl?: string}>` | `title?: string`, `viewMore?: PageJumpTarget`, `coverUrl?: string` | 推荐内容列表（详情链接与可选封面）。`title`（2026-10）：块级区标题，缺省宿主渲染「推荐」——站点推荐维度各异（相关推荐 / 同模特 / 同分类），如实命名由插件声明，它同时是「更多」落地页导航栏标题的来源。`viewMore`（2026-10）：块级「更多」跳转，与 `ExploreSection.viewMore` 同型同语义，见下文「块级『更多』入口」 |
 | `image` | `url: string` | `caption?: string`, `width?`, `height?` | 图片 |
-| `video` | `target: { action:'play', url }`（url 缺失时） | `url?`, `poster?`, `duration?`（秒）, `platform?`, `referer?`, `qualities?` | 视频。ADR-0026：`url` 变可选——缺省时**必须**携带 `target:{ action:'play', url }`（url 为详情页/播放页 URL），宿主渲染为播放占位，点播时懒调 `fetchPlayUrl` 现算出流；`referer` 仅在 CDN 校验 Referer 时设置（详见 `video-playback.md`）。ADR-0029：`qualities` 为多清晰度档位（每个清晰度独立 URL 的站点用），`url` 为默认档；master playlist 多码率的站点**无需声明**（宿主播放器自动解析 levels 渲染清晰度菜单） |
+| `video` | `target: { action:'play', url }`（url 缺失时） | `url?`, `poster?`, `duration?`（秒）, `platform?`, `referer?`, `qualities?` | 视频。`url` 变可选——缺省时**必须**携带 `target:{ action:'play', url }`（url 为详情页/播放页 URL），宿主渲染为播放占位，点播时懒调 `fetchPlayUrl` 现算出流；`referer` 仅在 CDN 校验 Referer 时设置（详见 `video-playback.md`）。`qualities` 为多清晰度档位（每个清晰度独立 URL 的站点用），`url` 为默认档；master playlist 多码率的站点**无需声明**（宿主播放器自动解析 levels 渲染清晰度菜单） |
 | `gallery` | `images: Array<{url; caption?}>` | — | 图片集（横滑缩略图 + 点开全屏预览，预览复用同一 `url`）。**给原图链**：站点若「缩略图 ≠ 原图」（如 kvs_site_a 视频截图 `img[data-original]` 480×270 vs `a[href]` 1920×1080），而该组图**没有**阅读页通道时，取缩略图 = 点开还是糊的（同样 200 + 合法 JPEG，不报错）；与 ReadingPage.pages 同一条红线。有阅读页通道的（如漫画）预览图可给缩略图、原图留给 `pages` |
 | `divider` | — | — | 分割线 |
 
@@ -231,13 +231,13 @@ const blocks = [
 type PageJumpTarget =
   | { action: 'list'; url?: string; category?: string; channel?: string }  // 列表：url 为页面通道（任意列表页 URL，
                                                           // 宿主以该 URL 调 fetchList），category 为
-                                                          // 组合查询串；channel 为通道标识（ADR-0064），
-                                                          // 二者至少其一（ADR-0025）
+                                                          // 组合查询串；channel 为通道标识，
+                                                          // 二者至少其一
   | { action: 'search'; query: string }     // 搜索
   | { action: 'detail'; url: string }       // 详情页（url 传给 fetchDetail）
   | { action: 'reading'; url: string }      // 阅读页（url 传给 fetchReadingPage）
   | { action: 'play'; url: string }         // 出流入口（url 为详情页或播放页 URL，宿主调
-                                            // fetchPlayUrl 解析出最终流；ADR-0020 + ADR-0026）
+                                            // fetchPlayUrl 解析出最终流； +）
   | { action: 'categories' }                // 分类页
 ```
 
@@ -260,7 +260,7 @@ interface ReadingPage {
   sourceName: string     // 来源名称
   sourceUrl: string      // 阅读页 URL
   pages?: string[]       // 兼容通道：页面图片 URL 列表（漫画/图集）。content 有则优先，缺则停用回退
-  content?: ContentBlock[]  // 章节内容块（ADR-0026）：图文任意混排（text/heading/image/link…）。
+  content?: ContentBlock[]  // 章节内容块：图文任意混排（text/heading/image/link…）。
                             // 单页全文小说直接把正文放这里，无需章节列表
   prevUrl?: string       // 上一章 URL
   nextUrl?: string       // 下一章 URL
@@ -286,7 +286,7 @@ interface ReadingPage {
 > 故：原图与缩略图分别收（可各自断言），并以「页数与站点声明张数一致」兜底
 > （如 `Images: 32` ↔ `pages.length === 32`）。
 
-## PlayUrlResult — 播放解析结果（fetchPlayUrl，ADR-0020）
+## PlayUrlResult — 播放解析结果（fetchPlayUrl）
 
 ```typescript
 interface VideoQuality {
@@ -302,16 +302,16 @@ interface PlayUrlResult {
   duration?: number          // 时长（秒）
   platform?: string          // 平台标识 / 线路来源（如 'NBY'、'video_site_a'）
   referer?: string           // CDN 校验 Referer 时设置（与 video block 的 referer 语义一致）
-  qualities?: VideoQuality[] // 多清晰度档位（ADR-0029）：url 为默认档；缺省 = 单档（兼容旧插件）
+  qualities?: VideoQuality[] // 多清晰度档位：url 为默认档；缺省 = 单档（兼容旧插件）
 }
 ```
 
-> 入参语义（ADR-0020 + ADR-0026）：`fetchPlayUrl(url)` 的 `url` 是「出流入口 URL」——剧集播放
+> 入参语义：`fetchPlayUrl(url)` 的 `url` 是「出流入口 URL」——剧集播放
 > 页、视频详情页、或任何能解析出最终流的页面。插件可在入口页内多跳解出播放参数再取流。
 
 ## 线路 × 剧集（episodes block + fetchPlayUrl）
 
-影视站（典型 macCMS/mytheme）详情页有「**线路** × **剧集**」两级：每条线路含若干剧集，**剧集 URL 是指向播放页的 URL，不是 m3u8**——需进入播放页解析才能拿到最终视频流。本项目自 ADR-0020 起支持：
+影视站（典型 macCMS/mytheme）详情页有「**线路** × **剧集**」两级：每条线路含若干剧集，**剧集 URL 是指向播放页的 URL，不是 m3u8**——需进入播放页解析才能拿到最终视频流。本项目支持：
 
 - **详情页产出 `episodes` block**（只含可解析线路；网盘分享页类线路按线路名启发式剔除，宿主内无法出流，见 SKILL「线路 × 剧集与播放页解析」）：
   ```javascript
@@ -330,7 +330,7 @@ interface PlayUrlResult {
 - **`fetchPlayUrl(playPageUrl)`**：可选导出，把播放页 URL 解析为 `PlayUrlResult`（可多跳：播放页 → 播放器配置如 `player_aaaa` → 自定义播放器 → 签名/加密链路）。宿主在用户点选剧集时**懒调用**，结果按会话缓存（URL 常带时效 `auth_key`，详见 `video-playback.md` 的播放页解析节）。
 - **不可解析就明确报错**：网盘线/未知加密在 `fetchPlayUrl` 中带来源信息抛错，宿主就地展示错误与重试，不静默。
 
-## 视频清晰度（ADR-0029，双通路）
+## 视频清晰度（双通路）
 
 `video` block 与 `PlayUrlResult` 均可带可选 `qualities: VideoQuality[]`（多 URL 型站点
 显式声明各档；`url` 为默认档）。**master playlist（HLS 多码率）站点无需声明**——宿主
@@ -376,7 +376,7 @@ blocks.push({ type: 'video', url: 'https://cdn.example.com/playlist.m3u8', platf
 
 ## CategoryGroup — 分类分组（类型化筛选）
 
-分类系统通过 `getCategories()` 返回分组列表，每个分组是一个**筛选器 widget**：按 `type` 声明渲染形态与值编码。设计借鉴同类阅读器的 FilterType（见 ADR-0014）。
+分类系统通过 `getCategories()` 返回分组列表，每个分组是一个**筛选器 widget**：按 `type` 声明渲染形态与值编码。设计借鉴同类阅读器的 FilterType。
 
 ```typescript
 type CategoryFilterType = 'select' | 'check' | 'text' | 'sort' | (string & {})
@@ -408,14 +408,14 @@ interface CategoryGroup {
   placeholder?: string      // 仅 text：输入框占位文案
   canAscend?: boolean       // 仅 sort：是否支持升/降序；默认 false（固定顺序）
   defaultValue?: { index: number; ascending: boolean } // 仅 sort：默认方向
-  dependsOn?: string        // 联动父组 key（ADR-0063）：缺省 = 独立静态组
+  dependsOn?: string        // 联动父组 key：缺省 = 独立静态组
   visibleWhen?: { equals: string | string[] } // 需配 dependsOn：父值命中才显，缺省恒显
   optionsWhen?: Record<string, CategoryNode[]> // 需配 dependsOn：父值→子选项集，未命中回落 items
   clearPolicy?: 'always' | 'if-invalid' // 需配 dependsOn：切父清空策略，缺省 always
 }
 ```
 
-**筛选组联动（ADR-0063）**：子组随父组值切换选项集、显隐，切父清空子已选（须三者同配，
+**筛选组联动**：子组随父组值切换选项集、显隐，切父清空子已选（须三者同配，
 不要只配其一）。规则：父按 `key` 寻址（参与联动的 key 同数组内唯一，manga_site_a 式共享 key 组
 不得做父/子）；父限 `select`/`sort` 单值组；`items` 放缺省页侧（父空回落它）；
 切父清全切片并级联，隐藏组不编码。校验见 `runtime listings`（结构错判失败）。
@@ -482,7 +482,7 @@ interface CategoryGroup {
 
 通过可选的 `getListings()` 方法返回。每个 listing 是**站点的固定目录页**（如
 「最新A漫 / 總排行 / 月排行」），**不是搜索页内的筛选状态**——宿主把 `category`
-原样传给 `fetchList` 就地渲染，无需进搜索流程。自 ADR-0021 起，listing 可携带
+原样传给 `fetchList` 就地渲染，无需进搜索流程。listing 可携带
 **本目录页专属筛选组**（`filters`，可选）：同一源不同目录页的筛选集通常不同
 （影视站每个分类 tid 的地区/类型/年份选项各异），宿主在浏览该目录页时渲染筛选
 控件，启用项并入 `category` 后调 `fetchList`；**不持久化**（每次进入重置，
@@ -491,24 +491,24 @@ interface CategoryGroup {
 ```typescript
 interface Listing {
   name: string        // 页签名（如 "最新A漫"、"月排行"）
-  url?: string        // 页面通道（ADR-0025）：目录页直接是页面 URL，宿主以该 URL 调 fetchList({url})。
+  url?: string        // 页面通道：目录页直接是页面 URL，宿主以该 URL 调 fetchList({url})。
                       // 与 category 二选一或并存（宿主优先 url）；合集/专题类入口用它；
                       // explore 条目用它作「探索页标识」（透传为 getExplore(context).url）
                       // 兼作宿主「网站原页」按钮的地址（见下「网站原页地址」一段）
-  channel?: string    // 列表通道标识（ADR-0064）：宿主透传进 fetchList 的 context.channel，
+  channel?: string    // 列表通道标识：宿主透传进 fetchList 的 context.channel，
                       // 插件优先按它分派（建议复用 classifyPath 的 kind 取值）
   origin?: string     // 显式网站原页地址（2026-10，Q13）：只喂宿主那颗 globe，**不进抓取**。
                       // 只在 url 不是网页地址（explore 标识）或压根没有 url 时才需要写；
                       // 宿主取原页时 **origin 恒优先于 url**
-  category?: string   // 组合查询串（复用 ADR-0014 编码），直接传给 fetchList；缺省用默认列表
+  category?: string   // 组合查询串（复用 编码），直接传给 fetchList；缺省用默认列表
   kind?: string       // 入口类型（开放字符串，缺省 'list'）：list / search（预设搜索直达）/
                       // series（合集/专题）/ explore（探索页条目，listings-first）等；
                       // 宿主对未知类型降级渲染为普通目录项
-  children?: Listing[]  // 分组/子菜单（ADR-0025 导航树）：一级导航的下拉子菜单或深导航；
-                        // 宿主**按层渲染，形态由宿主定**（iOS 发现页 = 分级页签，ADR-0067；
+  children?: Listing[]  // 分组/子菜单（导航树）：一级导航的下拉子菜单或深导航；
+                        // 宿主**按层渲染，形态由宿主定**（iOS 发现页 = 分级页签；
                         // DevConsole 预览 / runtime listings = 折叠树），只有叶子才是可点击
                         // 目录页；递归、无层数上限
-  filters?: CategoryGroup[]  // 本目录页专属筛选组（可选，ADR-0021，**叶子目录页**属性）；与 getCategories 的组同型同编码，仅对该 listing 生效
+  filters?: CategoryGroup[]  // 本目录页专属筛选组（可选，**叶子目录页**属性）；与 getCategories 的组同型同编码，仅对该 listing 生效
 }
 ```
 
@@ -529,7 +529,7 @@ async function getListings() {
     {
       name: '电影',
       category: 'tid=1',
-      // 目录页专属筛选组：从目录页内嵌筛选块提取的真实选项（ADR-0021）
+      // 目录页专属筛选组：从目录页内嵌筛选块提取的真实选项
       filters: [
         { name: '地区', key: 'area', type: 'select', items: [
           { id: '大陆', name: '大陆' }, { id: '日本', name: '日本' },
@@ -544,8 +544,8 @@ async function getListings() {
 }
 ```
 
-**宿主合并规则**（ADR-0021）：listing 自带 category（如 `tid=1`）为目录页基础参数，
-用户在该目录页启用的筛选组编码为 ADR-0014 查询串追加在后——同名 key 后者覆盖。
+**宿主合并规则**：listing 自带 category（如 `tid=1`）为目录页基础参数，
+用户在该目录页启用的筛选组编码为查询串追加在后——同名 key 后者覆盖。
 **筛选状态每次进入重置，不持久化**（区别于搜索页的已启用筛选）。
 
 **网站原页地址（2026-10 起，`url` 的第二个消费方 + 显式 `origin`）**：iOS 宿主顶栏的
@@ -582,7 +582,7 @@ async function getListings() {
   不展示筛选表单，分类内容只能经 listings 目录页触达（如 manga_site_f）。
   站点反爬导致分类接口无法实测时，**只落指引、不冒充能力**（见 SKILL 阶段 1
   分类页分析第 7 条）。
-- `category` 与 `getCategories` 的值编码共用 ADR-0014 契约（`key=id`、
+- `category` 与 `getCategories` 的值编码共用契约（`key=id`、
   `key=id1,id2,-id3`、sort 方向后缀等），`fetchList` 必须从
   `context.category` 解析。
 - **filters 选项必须真实**：从目录页内嵌筛选块逐链接提取（id 取筛选路由原文，
@@ -590,7 +590,7 @@ async function getListings() {
   全系 CF 403），**声明真实选项、`fetchList` 对筛选键请求如实报错**（带站点
   信息与替代路径），不静默回退未筛选列表——延续「不冒充能力」原则。
 
-## 页面通道、导航树与递归列表（ADR-0025）
+## 页面通道、导航树与递归列表
 
 混合内容站（导航混合分类/搜索/短视频/新闻/合集、每类落页结构不同、合集两级或更深）的
 入口模型三件套：
@@ -601,7 +601,7 @@ async function getListings() {
 2. **导航树**：`getListings()` 返回可嵌套的 `Listing[]`（`children` 递归）承载站点的
    下拉子菜单/深导航；叶子目录页用 `url`（页面通道）或 `category` 承接。宿主**按层渲染，
    呈现形态由宿主定**：iOS 发现页 = 分级页签（DFS 展平成**叶子页序列** + 每层一条页签行 +
-   单一分页器，ADR-0067），DevConsole 预览 / `runtime listings` = 折叠树（刻意暴露声明的
+   单一分页器），DevConsole 预览 / `runtime listings` = 折叠树（刻意暴露声明的
    完整结构）；只有叶子可点击。
 3. **递归列表**：合集/专题条目带 `target:{ action:'list', url }` → 点进又是列表（可再带
    target）→ **嵌套层级任意深**（第 3 / 4 / 5 … 级合集专题无需模型改动）。
@@ -611,7 +611,7 @@ async function getListings() {
 请求页形态构造（query 页追加 `?page=`；路径页去掉尾数再拼 `/page`）。可用「下一页」链接的
 href 形态（`?page=` 或 `/N`）做确认。
 
-## 懒播放解析（ADR-0020 + ADR-0026 泛化）
+## 懒播放解析（泛化）
 
 `fetchPlayUrl(url)` 的入参从「剧集播放页 URL」泛化为「**任意出流入口 URL**」（详情页/播放页/
 任何能解析出最终流的页面）——详情页即播放入口的站也可直接 `fetchPlayUrl(detailUrl)`，内部
@@ -659,21 +659,21 @@ async function getExplore(context = {}) {
 经 `getListings()` 里 `kind:'tags'` 条目暴露（`url` 为索引页 URL，仅展示/回退；
 验证走 `getTags` 首页，不调 `fetchList`）。与 `fetchList` 正交：索引页无 slug 时
 `fetchList({url:'/tags/'})` 须报错指引到 `getTags`；标签视频列表仍走 `tag=<slug>` /
-`/tags/<slug>/`（video_site_b 为 `/tag.php?slug=<slug>`）页面通道。两种形态（ADR-0037/0038）：
+`/tags/<slug>/`（video_site_b 为 `/tag.php?slug=<slug>`）页面通道。两种形态：
 
 - **首字分组云**（kvs_site_b）：单次全量，返回裸 `TagGroup[]`（组序/组内序忠于 DOM，不做拼音排序）。
 - **分页云**（video_site_b）：`page` 从 1 开始；返回 `{groups, pagination}` 信封（扁平云每页单组，
   标题为排序页标识如 `HOT 第1页`；`pagination` 复用 `PaginationMeta` 页码式，`hasMore` 驱动加载更多）。
 
-**索引页自己的页级筛选（ADR-0021 + ADR-0062）**：`kind:'tags'` 叶子**同样消费
+**索引页自己的页级筛选**：`kind:'tags'` 叶子**同样消费
 `Listing.filters`**——宿主在标签索引页渲染筛选栏，选中项与 `Listing.category` 合并成
-ADR-0014 组合串，经 **`TagContext.category`** 透传（与 `fetchList` 的 `context.category`
+ 组合串，经 **`TagContext.category`** 透传（与 `fetchList` 的 `context.category`
 同口径同编码；空筛选不传键）。插件据此换页/换参数，**不要**为它另造 context 字段：
 
 - 内容类型开关（kvs_site_a `/tags/` ↔ `/albums/tags/`，站点是**换页**不是查询参数 →
   `type` 是插件内部键，拦在 URL 构造里、别拼进站点查询串）；
 - 服务端排序（video_site_b `views|videos`）也是普通筛选组（`key:'sort'`），插件从
-  `context.category` 解析后拼进站点 URL——**`TagContext.sort` 已退役**（ADR-0062：那曾是
+  `context.category` 解析后拼进站点 URL——**`TagContext.sort` 已退役**（那曾是
   宿主硬编码的单站档位，对无此能力的站是假能力）。
 
 > **分组边界不保证是独立容器**（kvs_site_a 案例，2026-10）：首字分组云的 DOM 有「一分组一容器」
@@ -709,7 +709,7 @@ async function getTags(context) {
   // 组序/组内序忠于 DOM；url 绝对化；target 显式声明进列表
   // return groups // 裸 TagGroup[]
 
-  // 分页云 + 索引页自己的筛选（video_site_b）：排序档来自 Listing.filters 的选中项（ADR-0062）
+  // 分页云 + 索引页自己的筛选（video_site_b）：排序档来自 Listing.filters 的选中项
   const params = parseCategory(context && context.category)
   const sort = params.sort === 'videos' ? 'videos' : 'views'
   const page = Math.max(parseInt(context && context.page, 10) || 1, 1)
@@ -724,9 +724,9 @@ async function getTags(context) {
 ```typescript
 interface PluginContext {
   category?: string    // 分类筛选（传入组合后的查询字符串，如 "region=cn&type=rexue"）
-  url?: string         // 页面通道（ADR-0025）：任意列表页 URL（导航入口/合集/专题/分类落页），
+  url?: string         // 页面通道：任意列表页 URL（导航入口/合集/专题/分类落页），
                        // 插件按 URL 分派到对应列表解析逻辑。与 category 二选一或并存
-  channel?: string     // 列表通道标识（ADR-0064）：Listing.channel / PageJumpTarget.list.channel
+  channel?: string     // 列表通道标识：Listing.channel / PageJumpTarget.list.channel
                        // 的透传，有则优先按它分派、无则回退按 url 正则判定
   page?: number        // 页码，从 1 开始
   pageSize?: number    // 每页数量
@@ -734,7 +734,7 @@ interface PluginContext {
 }
 ```
 
-## 列表通道标识（ADR-0064，替代 URL 正则分流）
+## 列表通道标识（替代 URL 正则分流）
 
 多形态站（视频/图集双栈、索引/列表同前缀不同形）曾靠 `classifyPath` 等十几个正则按
 `url` 反推「进哪个解析分支」——改一处忘一处 = 某一态静默 0 条。新约定把「意图」显式化：
@@ -758,13 +758,13 @@ interface ListResult {
   items: ListItem[]           // 本页条目
   pagination?: PaginationMeta // 分页元数据（可选）
   layout?: { columns?: number } // 排布声明（可选，插件赢）：1~4，横竖通吃
-  filters?: CategoryGroup[]   // 本列表页自己的筛选组（可选，ADR-0066）
+  filters?: CategoryGroup[]   // 本列表页自己的筛选组（可选）
 }
 ```
 
 `layout.columns`（可选）：本页网格列数，**插件声明赢过用户全局列数**。竖海报页声明即覆盖（`1` = 强制单列大卡）；横图页缺省单列，声明 `≥2` 即进网格；`1~4` 之外宿主忽略回退全局。不声明 = 跟用户设置（我的页图片区 2/3/4）。
 
-`filters`（可选，ADR-0066）：**本列表页自己**可切换的筛选维度，与 `Listing.filters`（目录页条目）、
+`filters`（可选）：**本列表页自己**可切换的筛选维度，与 `Listing.filters`（目录页条目）、
 `PageJumpTarget.list.filters`（跳转携带）**同型同编码**——`CategoryGroup[]`、key 是站点自己的参数名、
 选中项由宿主合并进 `category` 再回调 `fetchList`（同一 `url`）。
 
@@ -772,7 +772,7 @@ interface ListResult {
 
 | 来源 | 什么时候拿得到 | 典型场景 |
 |---|---|---|
-| `Listing.filters` | 进页**前**（页签已渲染） | 目录页自己的筛选（ADR-0021） |
+| `Listing.filters` | 进页**前**（页签已渲染） | 目录页自己的筛选 |
 | `PageJumpTarget.list.filters` | 跳转时（卡片上就有） | 落地页星期/字母筛选（manga_site_a/video_site_a） |
 | `ListResult.filters` | **抓到页面之后** | 选项按页不同、且只在页面里（video_site_c 工作室题材滑块） |
 

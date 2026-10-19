@@ -85,7 +85,7 @@ describe('createUiAPI 单元（注入 handler）', () => {
   })
 })
 
-describe('createUiAPI 无 handler（headless，ADR-0006 Q5）', () => {
+describe('createUiAPI 无 handler（headless）', () => {
   it('input / confirm 清晰报错（不静默降级，避免吞 bug）', async () => {
     const ui = createUiAPI(undefined)
     await expect(ui.showInputDialog('验证码')).rejects.toThrow(/无 UI 信道/)

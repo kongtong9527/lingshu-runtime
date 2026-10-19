@@ -45,7 +45,7 @@ function fakeResponse(opts: { status?: number; body?: string; headers?: Record<s
   }
 }
 
-describe('challenge 共享判定表（ADR-0045 Q10，三端拉齐）', () => {
+describe('challenge 共享判定表（三端拉齐）', () => {
   it('403 + cf-mitigated 头即挑战（最精确信号，不看正文）', () => {
     expect(isChallengeProbe({ status: 403, headers: { 'cf-mitigated': 'challenge' }, body: '<html>ok</html>' })).toBe(true)
   })
@@ -185,7 +185,7 @@ describe('$lib.http.get 边界抛错（挑战识别下沉宿主）', () => {
   })
 })
 
-describe('onBrowserFetch 宿主注入（ADR-0045 薄注入 + $lib 边界判挑战）', () => {
+describe('onBrowserFetch 宿主注入（薄注入 + $lib 边界判挑战）', () => {
   beforeEach(() => {
     fetchMock.mockReset()
     // 直连首跳恒回 403 挑战页（宿主 http 层即抛 CHALLENGE，插件走浏览器重抓）

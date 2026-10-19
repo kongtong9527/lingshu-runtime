@@ -7,7 +7,7 @@ export type SettingValue = string | boolean
 /**
  * 创建一个**只读、按 run 注入、不持久**的用户偏好读取视图。
  *
- * 与 `$lib.storage` 严格分家（ADR-0004）：
+ * 与 `$lib.storage` 严格分家：
  * - settings = 宿主管的用户偏好，每次 run 由宿主把当前值注入沙箱，插件只能 `get`，无 `set`；
  * - storage   = 插件自管的文件持久 KV，有 `set/remove/clear`。
  *

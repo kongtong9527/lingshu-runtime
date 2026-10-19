@@ -116,7 +116,7 @@ function request(url) {
 
 ### 漫画阅读页：`fetchReadingPage` 应提取上一话/下一话（`prevUrl`/`nextUrl`）
 
-**症状**：App 阅读页滚到章末不加载下一话（连续章节流 ADR-0032 失效），
+**症状**：App 阅读页滚到章末不加载下一话（连续章节流 失效），
 或用宿主侧章节列表兜底推导出**跳漏小节**的章节链。
 
 **原因**：阅读页的 prev/next 是**站点自身导航**（分卷/小节拆分只有它知道——
@@ -152,13 +152,13 @@ App 滚到章末永远不触发加载下一话（真机用户报修「拖到 80%
 **症状**：全路由（列表/详情/搜索）`$lib.http` 403，body 为挑战页（`Just a moment...`）或
 WAF block 页（`Attention Required!`），常带 `cf-mitigated: challenge` 响应头。
 
-**先定级再动手**（ADR-0042）：L1 单资源 / L2 资源链仍有插件侧解法（见 HLS-403 与宿主直连）；
+**先定级再动手**：L1 单资源 / L2 资源链仍有插件侧解法（见 HLS-403 与宿主直连）；
 L3（全站）的 Node 通道彻底无解——`cf_clearance` 全套复用（同机同 IP、同 UA、齐浏览器头）
 经 curl 仍 403（clearance 绑 TLS 指纹），"粘贴 Cookie"路线已否决，不再投入。
 
 **修复（L3 插件侧只做一件事：纯直连，CHALLENGE 直接抛由宿主验证入口接管；到万不得已禁止用 `$lib.browser.getHtml`，例外判据见 `api-reference.md`「Cloudflare 挑战」节）**：
 
-挑战识别 + 如实报错已下沉宿主（ADR-0052）：`$lib.http.get/post/del` 命中共享判定表
+挑战识别 + 如实报错已下沉宿主：`$lib.http.get/post/del` 命中共享判定表
 （403/503 + `cf-mitigated` 头或正文强特征串，见 runtime `runtime/challenge.ts`）
 即抛统一错（`code == 'CHALLENGE'` + `url` + `Lingshu:` 前缀人话），不 resolve
 挑战页给插件。**禁止插件自写 `isBlockedResponse`/`challengeError`**
@@ -174,15 +174,15 @@ L3（全站）的 Node 通道彻底无解——`cf_clearance` 全套复用（同
 骨架版以 `--fixture` 离线验证解析逻辑为上线标准。
 
 **真实案例**：`anime_site_a.plugin.js` v0.1.0（全站 Managed Challenge + WAF，list.html/detail.html/search.html
-三 fixture 离线全绿，在线抛指引错；宿主侧 `isChallengeResponse` 标记见 ADR-0042）→
-v0.2.0（ADR-0043：插件切显式 `$lib.browser.getHtml`，直连 403 → 单次浏览器重抓，
+三 fixture 离线全绿，在线抛指引错；宿主侧 `isChallengeResponse` 标记）→
+v0.2.0（插件切显式 `$lib.browser.getHtml`，直连 403 → 单次浏览器重抓，
 仍拦抛结构化 `code == 'CHALLENGE'` + `url`；runtime 无浏览器恒抛、`--fixture` 短路 browser；
 iOS 真机隐藏抓取仍 403，证隐藏通道对 L3 无解，转正需可见手过验证）→
-ADR-0052（判定下沉宿主，插件删判定函数与站名前缀错）→
-**现行（ADR-0060：插件侧弃用浏览器重抓，纯直连 + `CHALLENGE` 直抛交宿主验证入口接管，
+（判定下沉宿主，插件删判定函数与站名前缀错）→
+**现行（插件侧弃用浏览器重抓，纯直连 + `CHALLENGE` 直抛交宿主验证入口接管，
 只留 `assertParsed` 解析兜底；`request()` 回到一行 `$lib.http.get`）**。
 
-**L3 转正 checklist（ADR-0043，在线复核逐项打勾）**：referer 校验（详情三档 secure= 是否验详情页）/
+**L3 转正 checklist（在线复核逐项打勾）**：referer 校验（详情三档 secure= 是否验详情页）/
 sort `+` 编码（表单空格转 `+`，勿 `%20`）/ secure= 时效（约 12h，现算现用不落盘）/
 详情 playlist 上限（同社团推荐数）/ 反爬门控回归（isActive + 8s 冷却，禁并发打爆）/
 隐藏 WebView 屏外（block 页鬼影）/ 挑战判定三端拉齐（`cf-mitigated` 头 + 强特征集，
@@ -256,10 +256,10 @@ video_site_f 標題無站名不適用）：403 + 無該串才判挑戰，403 + �
 
 **修复**：
 - 分页改用 `/type/<tid>-<page>.html`（第 1 页 `/type/<tid>.html`），`hasMore` 取分页块内「当前/总页数」（如 `2/20`），取不到用「列表非空」启发式。
-- **筛选能力声明与请求解耦（ADR-0021 修订）**：`/show/` 被拦不影响**声明真实筛选组**——`getListings` 的每个 listing 可带 `filters`（从目录页内嵌筛选块逐链接提取，id 取 `/show/` 段位值原文），`fetchList` 检测到筛选键时构造 `/show/` 路由请求，403/挑战页**如实报错**（带站点信息与替代路径），不静默回退未筛选列表。声明真实存在的选项不是冒充能力；请求侧不可达就明说。
+- **筛选能力声明与请求解耦（修订）**：`/show/` 被拦不影响**声明真实筛选组**——`getListings` 的每个 listing 可带 `filters`（从目录页内嵌筛选块逐链接提取，id 取 `/show/` 段位值原文），`fetchList` 检测到筛选键时构造 `/show/` 路由请求，403/挑战页**如实报错**（带站点信息与替代路径），不静默回退未筛选列表。声明真实存在的选项不是冒充能力；请求侧不可达就明说。
 - 详情页里的分类/主演/导演链接虽指向 `/show/`、`/search/` 异位形态，插件生成的 `target` 用结构化跳转（`{action:'list', category:'tid=N'}` / `{action:'search', query}`）替代原 URL 约定。
 
-**真实案例**：`movie_site_c.plugin.js` 开发时 `/show/2--------2---.html` 等全部 403/000、`/type/1-2.html` 稳定 200——分页与无筛选目录页收口到 `/type/` 路由；筛选则按 ADR-0021 声明进 `Listing.filters`（五分类各一套真实选项，如电影 28 题材/27 地区、综艺无地区组），`fetchList` 对筛选键请求 403 时如实报错并引导站内搜索。
+**真实案例**：`movie_site_c.plugin.js` 开发时 `/show/2--------2---.html` 等全部 403/000、`/type/1-2.html` 稳定 200——分页与无筛选目录页收口到 `/type/` 路由；筛选则按声明进 `Listing.filters`（五分类各一套真实选项，如电影 28 题材/27 地区、综艺无地区组），`fetchList` 对筛选键请求 403 时如实报错并引导站内搜索。
 
 ### 播放页解析：encrypt、签名接口与时效 URL（`fetchPlayUrl`）
 
@@ -652,7 +652,7 @@ return sections // 裸数组，勿包 { sections } 信封
 （anime_site_a 四 fixture 全含，2026-09 实证）——该串无区分度；且部分站点会对半信任
 客户端回"403 状态 + 完整正文"（软拦截）。只看"状态 + 特征串"必误判。
 
-**现状（ADR-0052 后）**：宿主共享判定表已剔除该串（见 runtime `runtime/challenge.ts`），
+**现状（后）**：宿主共享判定表已剔除该串（见 runtime `runtime/challenge.ts`），
 插件侧**不再写 `hasRealContent` 前置判定**（anime_site_a/video_site_f 已删）——"403 + 真内容照常解析"
 由 `assertParsed(url, res, got)` 承载（解析出条目即成功，见 `api-reference.md`
 「Cloudflare 挑战」节）。
@@ -666,7 +666,7 @@ return sections // 裸数组，勿包 { sections } 信封
 
 **真实案例**：`anime_site_a.plugin.js`（2026-09：`BROWSER(headed-ephemeral)` 403
 + 真首页被两边同时误判 → 加否定门后 Node 403 + 真内容直解，常态连浏览器都不用；
-ADR-0052 后否定门退役，宿主天然放行）。
+ 后否定门退役，宿主天然放行）。
 
 ### 按窗口计数烧声誉的站（同一窗口第二次请求必 403）：frx-director 一次拿全 + 一页一环境
 
@@ -677,7 +677,7 @@ ADR-0052 后否定门退役，宿主天然放行）。
 必 403；计数疑似服务端/TLS 层，清 cookie 不回血）。frx 是单标签模型
 （`page_navigate` 即同一上下文内导航，无新窗口概念），天然连踩。注意这是
 **分析时**约束——运行时抓取归 runtime/`$lib.http` + DevConsole
-`browser-channel`（`ephemeral` 一次一焚，见 ADR-0046），不归 frx 管。
+`browser-channel`（`ephemeral` 一次一焚），不归 frx 管。
 
 **打法**（按成本从低到高）：
 
@@ -697,7 +697,7 @@ ADR-0052 后否定门退役，宿主天然放行）。
    （每次新导航都烧窗口，token 和窗口双烧）。
 
 **真实案例**：`anime_site_a.plugin.js`（2026-09，无签名需求，HTML 直解；
-运行时一次一焚见 ADR-0046 修订史）。
+运行时一次一焚 修订史）。
 
 ### 详情页缺尾斜杠回首页的站：`fetchDetail` 入口必须补齐尾斜杠（历史入口形态）
 
@@ -1290,7 +1290,7 @@ kvs_site_b/manga_site_d/kvs_site_a **毫无反应**（那些站的 `getTags` 根
 **原因**：那是宿主为单个插件写死的档位（iOS `TagServerSort` 枚举 + `TagContext.sort`
 字段），违反「不冒充能力」：插件没声明能力，宿主却渲染了控件。
 
-**落法**（ADR-0062）：标签索引页的页级筛选（含服务端排序）与其它目录页**同一条通道**——
+**落法**：标签索引页的页级筛选（含服务端排序）与其它目录页**同一条通道**——
 插件在 `Listing.filters` 里声明（排序就是一个 `key:'sort'` 的普通 `select` 组），宿主渲染、
 选中项与 `Listing.category` 合并成组合串，经 **`TagContext.category`** 回 `getTags`
 （与 `fetchList` 的 `context.category` 同口径）；`TagContext.sort` 与宿主硬编码排序行**已删除**，
@@ -1353,7 +1353,7 @@ iOS 端同一张封面静止不动——误以为插件取错图或 iOS 解码�
 ② 读参考脚本时**分清它改的是哪一层**：改响应 JSON 字段 / 改 localStorage / 覆写 DOM
 → 都是客户端层，插件不需要；改请求头/签名/token → 才是服务端层。③ 插件实现上
 **不写任何门槛字段判定**（不写 `if (vip) throw` / `if (isPaid) skip`），能否出流以
-**接口是否给了地址**为准。④ 用户可见处**如实标注**（本项目走 ADR-0061 形态：列表 `tags`
+**接口是否给了地址**为准。④ 用户可见处**如实标注**（本项目走形态：列表 `tags`
 状态标记 + 详情状态块），别假装站点已放开，也别把可播内容误报成「需登录」。
 
 **真实案例**：`fleet_site_a.plugin.js` 1.0.0（fleet_site_b 家族；`token` 四种取值响应完全一致，
@@ -1376,7 +1376,7 @@ iOS 端同一张封面静止不动——误以为插件取错图或 iOS 解码�
 - 档位参数才是唯一的档位开关 → 插件**去掉该参数**即可拿全量，不需要伪造任何身份。
 
 实现上照抄第一形态的三条纪律：**不写门槛字段判定**（`role="GUEST"` / `max-duration` /
-`join` 按钮一律不读）、**能否出流以接口是否给了地址为准**、**如实标注**（ADR-0061：
+`join` 按钮一律不读）、**能否出流以接口是否给了地址为准**、**如实标注**（
 列表 `tags` 状态标记 + 详情状态块说明「本站对访客只放 30 秒预告，本插件直取完整片源」）。
 
 **参考脚本读法补充**：`video_site_c.lpx` 那份脚本改了三处——① 页面字段（`zone:'NONAUTHORIZED'→'AUTHORIZED'`、
@@ -1438,7 +1438,7 @@ key/iv 由 `EVP_BytesToKey(password, salt)` 派生——**MD5 迭代**，前 32 
 
 **原因**：这类站（fleet_site_b 站群实测）对未知参数**宽松兜底**——落到默认内容池，
 而不是返回空数组或 4xx。于是「拿到数据」这个最常用的健康判据在这里**完全失效**。
-与两类已知坑都不同：不是 ADR-0062 的「参数被忽略、返回**同一集合**的未筛选结果」
+与两类已知坑都不同：不是 「参数被忽略、返回**同一集合**的未筛选结果」
 （这里是**另一批内容**），也不是「0 条 = 匹配失败」（这里有满页数据）。
 
 **落法**：**兜底指纹比对**——先用一个随机无效值（如 `zzz_<时间戳>`）请求一次，
@@ -1769,7 +1769,7 @@ for (const b of resp.data) console.log(b.id, b.name, b.style, b.route, b.items.l
 **判据（固定三点，30 秒定案）**：同一端点跑三遍，**对照 total 与首几条 id**：
 
 ```
-无参            → total=10000   ← 基线
+无参→ total=10000   ← 基线
 有效值 tag_id=72 → total=4244    ← 与基线不同 = 真筛
 无效值 tag_id=99999999 → total=0 ← 必须回 0；不回 0 说明这个键根本没被消费
 ```

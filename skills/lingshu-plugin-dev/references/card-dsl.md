@@ -1,6 +1,6 @@
 # 卡片 DSL（Card DSL v1，插件侧契约）
 
-`ListItem.card?: CardDSL`——列表项的自定义卡片描述。每项自带现算 JSON（文字已填好），宿主原生渲染。有即渲染、无即回退老卡。根非法（含**未知 root 类型**）才整卡回退，未知**子**节点就地跳过，单图坏就地占位。详见 ADR-0050。
+`ListItem.card?: CardDSL`——列表项的自定义卡片描述。每项自带现算 JSON（文字已填好），宿主原生渲染。有即渲染、无即回退老卡。根非法（含**未知 root 类型**）才整卡回退，未知**子**节点就地跳过，单图坏就地占位。。
 
 > **字段级规范以 `contracts/card-dsl.schema.json` 为准**（JSON Schema 2020-12；母仓与公开 `lingshu-runtime` 仓同名路径，npm 包用户改用包内运行时校验 `validateCardDSL` / `CARD_LIMITS`，见 `lingshu-runtime/card-dsl` 子路径出口）；本文件是用法与取舍说明。
 > 字段集由 `npm run contract:check` 的字段集合门三端互锁（schema ↔ `runtime/src/types.ts` ↔ iOS `CardModels.swift`），**新增字段必须同时改三处并补 `contracts/conformance/` 语料**，否则 CI 红（母仓维护用，第三方走公开仓 issue 提需求）。
@@ -103,7 +103,7 @@ type CardFormattedValue =
 | `contain` | 整图可见、盒内留白（letterbox） | **绝不裁**的卡（长图/横竖混排且不想裁） |
 | 其它/非法 | 回 `cover`（不报错、不炸卡；runtime 报 warning，DevConsole 与 iOS 同判） | — |
 
-两条写侧纪律：① **要「整图完整且无留白」就自己把 `aspect` 算准**（用站点给的宽高现算，如 `aspectForCover` 输出 `${w}:${h}`）——宿主**不会**替你去学真实图片比（卡片列表是自适应高，学比例会让行高跳）；② `resizeMode: 'contain'` 的盒高仍由 `aspect` 定，所以横竖混排想零留白只能走 ①。三端（iOS `CardCoverImageView` / DevConsole 预览 / runtime 校验）必须同构，签名与回退口径见根仓库 `docs/adr/0058-card-image-fill-contract.md`。
+两条写侧纪律：① **要「整图完整且无留白」就自己把 `aspect` 算准**（用站点给的宽高现算，如 `aspectForCover` 输出 `${w}:${h}`）——宿主**不会**替你去学真实图片比（卡片列表是自适应高，学比例会让行高跳）；② `resizeMode: 'contain'` 的盒高仍由 `aspect` 定，所以横竖混排想零留白只能走 ①。三端（iOS `CardCoverImageView` / DevConsole 预览 / runtime 校验）必须同构，签名与回退口径见根仓库内部设计记录。
 
 `src` 支持 `https` 与 `data:`（Base64/SVG，≤512KB，超限占位）。`transport/decrypt` 可选自带，缺省继承整卡（现有封面 `metadata` 管线）。`overlay.position`：`topLeft/topRight/bottomLeft/bottomRight/center`；`overlay.shape` 缺省 `rounded`（小胶囊），`circle` = 圆形钮（图标徽用，如视频中央播放钮；底色/字色全由插件声明，宿主只做形状；iOS 定径 34pt、图标 14pt）：
 

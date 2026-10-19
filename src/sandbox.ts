@@ -21,11 +21,11 @@ export interface SandboxOptions {
   settings?: Record<string, SettingValue>
   /**
    * 共享 cookie jar：传入则跨 run 复用（登录 run 写入的 session cookie，
-   * 后续读取 run 可带上）。缺省每次 run 新建短命 jar。见 ADR-0005。
+   * 后续读取 run 可带上）。缺省每次 run 新建短命 jar。。
    */
   cookieStore?: CookieJar
   /**
-   * $lib.ui 的宿主处理器（ADR-0006）：插件中途直问用户（验证码/确认/toast/开链接）时，
+   * $lib.ui 的宿主处理器：插件中途直问用户（验证码/确认/toast/开链接）时，
    * 经此回调向宿主要结果。DevConsole 桥接到前端、测试返回 canned 响应；
    * 缺省时 input/confirm 清晰报错、message/launchUrl 静默 no-op。
    */

@@ -62,7 +62,7 @@ const raw = $lib.Buffer.from(res.body, 'base64')
 注意：`$lib.crypto.randomBytes` 在沙箱内不可用（无安全 RNG），随机 IV/字节用
 `$lib.util.randomInt(0, 255)` 拼 `$lib.Buffer`。
 
-### Cloudflare 挑战（宿主统一抛错，ADR-0052）
+### Cloudflare 挑战（宿主统一抛错）
 
 `get/post/del` 命中共享判定表（403/503 + `cf-mitigated` 头或正文强特征串，
 见 runtime `runtime/challenge.ts`）即抛统一错（`code == 'CHALLENGE'` + `url` +
@@ -71,7 +71,7 @@ const raw = $lib.Buffer.from(res.body, 'base64')
 （无强信号）照常 resolve，插件按"解析出条目即成功"兜底：
 
 ```javascript
-// 主形态（默认）：纯直连，CHALLENGE 直接抛由宿主验证入口接管（ADR-0060：旧
+// 主形态（默认）：纯直连，CHALLENGE 直接抛由宿主验证入口接管（旧
 // 「直连优先 + 单次浏览器重抓」形态已退役）。到万不得已禁止用 `$lib.browser.getHtml`
 // ——例外仅当同时满足：
 // ① clearance 绑 TLS 指纹（同机同 UA 全套头 curl 复核仍 403，复用无解）；
@@ -164,7 +164,7 @@ const serverIndex = $lib.util.randomInt(0, servers.length - 1) // 随机选一�
 
 > `randomInt` 是**闭区间**（含 max）。随机选取数组元素传 `randomInt(0, arr.length - 1)`。
 
-## $lib.ui — 插件直问用户（ADR-0006）
+## $lib.ui — 插件直问用户
 
 插件在 run 中途、无法预先声明、直接面向用户发起的交互。Promise 式 `await`（非 callback）——与 `$lib.http` 同构：http 暂停等网络，ui 暂停等人类，都经宿主拿结果、可录放。
 

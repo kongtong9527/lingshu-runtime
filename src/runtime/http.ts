@@ -26,7 +26,7 @@ export interface HttpOptions {
  * - 失败：status 为 0，error 描述异常（如超时 / DNS 失败）
  */
 export interface HttpRecord {
-  /** BROWSER = 经宿主浏览器通道抓取（ADR-0045 headed sidecar / fixture 短路），非 Node 直连 */
+  /** BROWSER = 经宿主浏览器通道抓取（headed sidecar / fixture 短路），非 Node 直连 */
   method: 'GET' | 'POST' | 'DELETE' | 'BROWSER'
   url: string
   requestHeaders: Record<string, string>
@@ -53,7 +53,7 @@ export interface SimpleCookie {
 /**
  * cookie jar：domain -> (name -> cookie)。
  * 默认随 http 实例创建（per-run 短命）；宿主可传入共享实例让 cookie 跨 run 复用
- * （登录 run 写入的 session cookie，下一个读取 run 才能带上，见 ADR-0005）。
+ * （登录 run 写入的 session cookie，下一个读取 run 才能带上）。
  */
 export type CookieJar = Map<string, Map<string, SimpleCookie>>
 
@@ -105,7 +105,7 @@ function parseSetCookie(header: string): {
  * 内置内存 cookie jar：setCookies 预置的 cookie 与响应 Set-Cookie 都会按域
  * 匹配，后续同域请求自动附加为 Cookie 头（调用方显式 Cookie 头优先）。
  * 传入 sharedStore 时，jar 跨 http 实例（即跨 sandbox/run）共享——登录 run
- * 写入的 cookie，后续读取 run 可复用（见 ADR-0005 声明式交互）。
+ * 写入的 cookie，后续读取 run 可复用（见 声明式交互）。
  */
 export function createHttpAPI(onRequest?: RequestRecorder, sharedStore?: CookieJar) {
   // domain -> (name -> cookie)；外部传入则跨 run 共享，否则 per-run 短命
@@ -256,7 +256,7 @@ export function createHttpAPI(onRequest?: RequestRecorder, sharedStore?: CookieJ
       // string 透传（form-urlencoded 等已编码体）；二进制（跨 vm realm 的
       // $lib.Buffer 亦命中，ArrayBuffer.isView 跨 realm 有效）原样发送字节；
       // 对象仍 JSON.stringify。写侧动作（如登录）常用
-      // application/x-www-form-urlencoded，见 ADR-0005。
+      // application/x-www-form-urlencoded。
       // 二进制请求体（如 Flutter video_site_h 的 IV + AES 密文）传 $lib.Buffer /
       // Uint8Array，宿主经 Buffer.from 拷贝字节后发出。
       let body: string | Buffer | undefined

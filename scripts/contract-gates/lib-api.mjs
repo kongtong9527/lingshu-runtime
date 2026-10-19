@@ -8,9 +8,9 @@
 //   L1 Node  —— import runtime/dist/sandbox.js，真跑 createSandbox()，反射 $lib 的键名/方法名/fn.length
 //   L2 iOS   —— 静态抽取：RunEngine.makeLib 的命名空间键、各桥 setObject(_, forKeyedSubscript:) 的键
 //                与对应 @convention(block) 形参个数、libRegistry/libKeys 注册表
-//   L3 文档  —— contracts/lib-api.md 必须逐个提到 json 里声明的每个 `$lib.<ns>.<method>`
-//   L4 版本  —— **两条号段**：契约版本（`contractVersion`，只随注入面递增，插件 `minRuntimeVersion` 的基准）
-//                ↔ iOS 常量（恒等）/ runtime 包版本（只要求 ≥，见下面 L4 段与 docs/adr/0069）
+//   L3 文档—— contracts/lib-api.md 必须逐个提到 json 里声明的每个 `$lib.<ns>.<method>`
+//   L4 版本—— **两条号段**：契约版本（`contractVersion`，只随注入面递增，插件 `minRuntimeVersion` 的基准）
+//                ↔ iOS 常量（恒等）/ runtime 包版本（只要求 ≥，见下面 L4 段与内部设计记录）
 //                另含**注入面指纹**：改了面就必须做一次显式的版本决定（递增契约版本或刷新指纹）
 //
 // 用法：node scripts/contract-gates/run.mjs（本文件是库，无 CLI 入口；L1 需要先 npm run -w runtime build）
@@ -137,7 +137,7 @@ function compareSemver(a, b) {
 /**
  * **注入面指纹**：把契约里「插件真能调到的东西」规范化成一个稳定字符串再哈希。
  *
- * 为什么要它：契约版本与包版本解耦之后（docs/adr/0069），「每次发布都推着契约版本走」这个**偶然的**
+ * 为什么要它：契约版本与包版本解耦之后（内部设计记录），「每次发布都推着契约版本走」这个**偶然的**
  * 保护就没了——加了/删了一个 `$lib` 方法而契约版本没动，门 2 的 L1/L2/L3 全都是绿的（它们查的是
  * 「三处一致」，不是「面变没变」）。删掉一个方法而不动契约版本最致命：插件声明的 `minRuntimeVersion`
  * 会变成一句谎话（宿主报的版本比它实际提供的能力新），装上去在运行期炸。
@@ -294,7 +294,7 @@ export async function runLibApiGate({ recordSurfaceHash = false } = {}) {
   // 「不可安装」——不崩不报错，只在「装插件」这条路上静默堵死（2026-10 实测：公开插件仓
   // 3 个插件全部点不动）。
   //
-  // **两条号段**（解耦前两者恒等，见 docs/adr/0069）：
+  // **两条号段**（解耦前两者恒等，见内部设计记录）：
   //   · `contractVersion` = **$lib 注入面的版本**（本契约自己的版本）——只随注入面变更递增；
   //     插件 `minRuntimeVersion` 比的就是它 ⇒ **iOS 常量必须与它恒等**（一个字的差都不能有）。
   //   · `runtime/package.json` 的 `version` = **npm 包版本**——随每次发布递增（补丁、CLI 修复、

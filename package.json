@@ -1,6 +1,7 @@
 {
   "name": "lingshu-runtime",
   "version": "1.0.4",
+  "private": true,
   "type": "module",
   "bin": {
     "lingshu": "./dist/index.js",
@@ -45,10 +46,6 @@
   "homepage": "https://github.com/kongtong9527/lingshu-runtime#readme",
   "bugs": {
     "url": "https://github.com/kongtong9527/lingshu-runtime/issues"
-  },
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
   },
   "files": [
     "dist",

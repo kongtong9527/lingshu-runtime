@@ -20,7 +20,7 @@
 ```
 
 > 上面这行报错**逐字保留**：它是搜索键，改了后人就搜不到这条错误了。（当时的包名还是 `@lingshu/runtime`，
-> 2026-10 才去掉 scope 改成 `lingshu-runtime`——原因见 docs/adr/0068 补记。）
+> 2026-10 才去掉 scope 改成 `lingshu-runtime`——原因见内部设计记录（补记）。）
 
 而 `vite dev`（esbuild）能容忍 → **开发期一切正常、`vite build` 整包失败**。
 

@@ -1,16 +1,16 @@
 // 门 0 · 命名门：旧名的回退防护 + 包名/workspace 一致性。
 //
 // 背景一：Phase 1 把 `simulator/` 改名为 `runtime/`（包名 `@lingshu/simulator` → `@lingshu/runtime`，
-// 见 docs/adr/0068）。改名很容易被「顺手抄旧路径」回退，而旧路径在拆仓后会让公开仓连构建都跑不起来
+// 见内部设计记录）。改名很容易被「顺手抄旧路径」回退，而旧路径在拆仓后会让公开仓连构建都跑不起来
 // （devconsole/iOS 里任何 `../simulator/...` 引用在独立仓都是死链）。
 //
 // 背景二（2026-10）：npm 包名**去掉 scope**——`@lingshu/runtime` → `lingshu-runtime`、
 // `@lingshu/devconsole` → `lingshu-devconsole`。原因：npm 组织 `lingshu` 已被一个**零包**组织占用，
 // 而 npm 的 [Username Policy](https://docs.npmjs.com/policies/disputes) 明说「不按需转移组织名，
-// 只受理商标主张」，所以 scope 永远拿不到。见 docs/adr/0068 补记。
+// 只受理商标主张」，所以 scope 永远拿不到。见内部设计记录（补记）。
 //
 // 判定口径：只查**路径/包名形态**（`simulator/src`、`@lingshu/simulator`、`-w simulator`…），
-// 不查裸词——历史 ADR 与 `docs/superpowers/**` 里的「simulator」是当时的记录（有意不改写），
+// 不查裸词——历史内部设计记录与 `docs/superpowers/**` 里的「simulator」是当时的记录（有意不改写），
 // `ios/docs/simulator-debugging.md` 是**永不可改名的文件名**（ios/AGENTS.md 红线）。
 // 旧 scope 同理：只查**会被解析器/包管理器读到的形态**（import / require / 依赖键），
 // 不查散文字样——`runtime/docs/program-api.md` 与 `docs/opensource/execution-phases.md` 里
@@ -34,12 +34,11 @@ const SELF = 'scripts/contract-gates/naming.mjs'
 
 /**
  * 免检路径（**有意保留旧名的历史记录**，与 ios/AGENTS.md 的红线同一口径）：
- *   docs/adr/**        历史 ADR 正文（当时的记录，回改等于篡改历史）
- *   docs/superpowers/** 历史计划与复盘
- *   docs/opensource/**  开源拆分自己的规则文档（必须能引用旧形态才能写规则）
- * 判定仍会在「公开仓快照」上跑一次——那时这些目录只带 ADR 子集，命中仍属有意保留。
+ *   历史记录目录——决策记录正文 / 历史计划与复盘 / 开源拆分自己的规则文档
+ *   （该文档必须能引用旧形态才能写规则；当时的记录，回改等于篡改历史）。
+ * 判定仍会在「公开仓快照」上跑一次：公开快照不带决策记录，列表里的相应项自然失效。
  */
-const EXEMPT_PREFIXES = ['docs/adr/', 'docs/superpowers/', 'docs/opensource/']
+const EXEMPT_PREFIXES = ['docs/superpowers/', 'docs/opensource/']
 
 /** 旧名的路径/包名形态（真正的回退面） */
 const FORBIDDEN = [

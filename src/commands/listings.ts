@@ -7,11 +7,11 @@ export interface ListingsOptions {
 }
 
 /**
- * listings 命令：跑 getListings()，递归验证**导航树**（ADR-0025）：
+ * listings 命令：跑 getListings()，递归验证**导航树**：
  * - 分组结点（带 children）先打印，然后递归各子项；
  * - 叶子目录页用其 url（页面通道）优先、否则 category，调 fetchList 验证能出条目；
  *   （两者都缺省用默认列表验证）
- * - ADR-0021：叶子可携带 filters（本目录页专属筛选组）。命令打印筛选组摘要，
+ * - 叶子可携带 filters（本目录页专属筛选组）。命令打印筛选组摘要，
  *   并对「category 型」叶子额外用「category + 每个筛选组首个选项」组合验证 fetchList
  *   能消费；url 型叶子只打印摘要不强验（url 通道与筛选组合的边界语义未定，筛选验证
  *   本就是增强信息而非硬门槛，站点反爬导致失败仅提示、不置 exitCode）。
@@ -44,11 +44,11 @@ export async function listingsCommand(pluginId: string, options: ListingsOptions
     const leafOrigins: { name: string; address: string }[] = []
 
     /**
-     * ADR-0021 筛选组摘要 + 组合验证。
+     *  筛选组摘要 + 组合验证。
      * - 摘要：分节单组（sections，与 items 二选一）按节计数、首选项取首节首叶子；
      *   多选 tag 样式（display:'tags'）后缀 ·tag 标注展示形态（状态/编码与复选框一致）。
      * - 验证：用「category + 每组首选项」调**消费该筛选的动作**——`list` 叶子走 `fetchList`
-     *   （`context.category`），`tags` 叶子走 `getTags`（`TagContext.category`，ADR-0062）；
+     *   （`context.category`），`tags` 叶子走 `getTags`（`TagContext.category`）；
      *   带 `url` 时一并传（宿主也是 url + category 一起给，筛选栏挂在页面通道上）。
      *   **只提示不置 exitCode**：站点反爬拦截/离线 fixture 单页喂多 URL 都可能失败，
      *   与「不冒充能力」原则一致——目录页本身出内容才是通过标准。
@@ -73,7 +73,7 @@ export async function listingsCommand(pluginId: string, options: ListingsOptions
         })
         .join(' / ')
       console.log(`      ${indent}filters: ${summary}`)
-      // 联动静态校验（ADR-0063，Q12）：结构性 error 判失败（契约违反），warn 与动态探针只提示。
+      // 联动静态校验（Q12）：结构性 error 判失败（契约违反），warn 与动态探针只提示。
       // 运行期（DevConsole/iOS）对 error 永不白屏——容差渲染 + console 告警，见 filters-linkage.ts。
       const linkage = validateListingFilters(filters)
       for (const w of linkage.warnings) {
@@ -111,7 +111,7 @@ export async function listingsCommand(pluginId: string, options: ListingsOptions
           }
         }
       }
-      // 联动组合探针（ADR-0063，Q15-d）：逐父值 × 子在该父值下的首个非空选项，
+      // 联动组合探针（Q15-d）：逐父值 × 子在该父值下的首个非空选项，
       // 验证各分支都可消费（如 kvs_site_a `type=video/album` 两支排序档）。
       // 父取值过多时只探前 4 个、总组合上限 8 个；失败只提示不判失败（站点反爬/离线 fixture）。
       const linkedChildren = filters.filter(
@@ -221,7 +221,7 @@ export async function listingsCommand(pluginId: string, options: ListingsOptions
       // 标签索引条目：kind==='tags' 的叶子内容形态 = getTags()（legacy TagGroup[] 全量云，
       // 首字分组；或 TagResult 分页云，本页 groups + pagination，见 TagContext）。
       // url 为索引页 URL（仅展示/回退），验证走 getTags，不调 fetchList。
-      // ADR-0062：tags 叶子的 filters **同样消费**——选中项与 listing.category 合并成组合串，
+      // tags 叶子的 filters **同样消费**——选中项与 listing.category 合并成组合串，
       // 经 `TagContext.category` 透传（与 fetchList 的 context.category 同口径），
       // 故筛选验证也走 getTags（不是 fetchList）。
       if (kind === 'tags') {
@@ -270,8 +270,8 @@ export async function listingsCommand(pluginId: string, options: ListingsOptions
         if (items[0]) {
           console.log(`      ${indent}e.g. ${items[0].title}  ${items[0].url}`)
         }
-        // ADR-0066：列表页自声明筛选组（`ListResult.filters`，抓到页面才知道的选项）
-        // ——与目录页内嵌 filters（ADR-0021，下面 reportFilters）是**两个来源**，分开打印。
+        // 列表页自声明筛选组（`ListResult.filters`，抓到页面才知道的选项）
+        // ——与目录页内嵌 filters（下面 reportFilters）是**两个来源**，分开打印。
         const declared = (result as { filters?: Array<{ name?: string; key?: string; items?: unknown[] }> })?.filters
         if (Array.isArray(declared) && declared.length) {
           const parts = declared.map((g) => `${g.name ?? g.key ?? '?'}(${Array.isArray(g.items) ? g.items.length : 0}项)`)
@@ -282,7 +282,7 @@ export async function listingsCommand(pluginId: string, options: ListingsOptions
         process.exitCode = 1
       }
 
-      // ADR-0021：目录页内嵌筛选组（叶子属性）——打印摘要 + 组合验证（见 reportFilters）。
+      // 目录页内嵌筛选组（叶子属性）——打印摘要 + 组合验证（见 reportFilters）。
       await reportFilters(node, 'list', indent)
     }
 

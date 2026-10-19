@@ -85,4 +85,4 @@ routes 列表在「未覆盖」报错里也会带 `+headers:<名>` 后缀，便�
 - 「快照与在线不一致」类问题优先看快照是否**按插件消费面裁剪过**
   （video_site_c 的 `studio_room_*.json` 剔除了 `roomVideos/myVideos/nextVideos` 三块旁支数据）；
   裁剪过的快照不能拿来验那三块的解析。
-- 本能力不改变 ADR-0045：CLI 仍是纯 Node、L3 在线仍如实抛 `CHALLENGE`。
+- 本能力不改变 CLI 仍是纯 Node、L3 在线仍如实抛 `CHALLENGE`。

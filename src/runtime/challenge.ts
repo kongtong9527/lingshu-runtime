@@ -1,5 +1,5 @@
 /**
- * Cloudflare 挑战判定共享表 + 宿主统一挑战错（ADR-0042 分级 / ADR-0043 Q8C 三端拉齐 / ADR-0045 Q10）。
+ * Cloudflare 挑战判定共享表 + 宿主统一挑战错（分级 / 三端拉齐 /）。
  *
  * - 判定对象：Managed Challenge（`Just a moment...`，`cf-mitigated: challenge`）
  *   与 WAF block 页（`Attention Required!`）。
@@ -14,7 +14,7 @@
  *   无浏览器桩（`runtime/browser.ts`）、DevConsole `proxy.ts isChallengeResponse`
  *   （只标记不抛，播放链路防缓存挑战页当媒体）。
  *   iOS `ChallengeDetector.swift responseMarkers` 为同表对照（不跨端搬代码，
- *   沿 ADR-0043 惯例；改一处必须同步另一处）。
+ *   沿惯例；改一处必须同步另一处）。
  * - 插件侧不再写判定：挑战识别 + 报错是宿主职责（见技能 pitfalls L3 节），插件只做
  *   直连优先 + 最多 1 次浏览器重抓，`code == 'CHALLENGE'` 即走验证链路。
  */

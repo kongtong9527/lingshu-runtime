@@ -1,4 +1,4 @@
-// 卡片 DSL 轻校验（ADR-0050）：结构合法性 + 安全红线（节点数/深度/图片数）。
+// 卡片 DSL 轻校验：结构合法性 + 安全红线（节点数/深度/图片数）。
 // 根非法 → 整卡回退；超限 → 宿主截断（此处报 warning）。宿主解码未知 type 跳节点。
 
 import type { CardDSL, CardNode } from './types.js'

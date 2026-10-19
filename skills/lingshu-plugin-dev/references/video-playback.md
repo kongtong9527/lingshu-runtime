@@ -1,6 +1,6 @@
 # 视频播放参考（插件侧）
 
-> 本文只讲**插件作者**需要知道的：如何正确产出 `video` block、以及影视站「播放页解析」（ADR-0020）。DevConsole/宿主如何播放、代理重写、处理 Cloudflare 与浏览器兼容，属宿主侧实现，见 `devconsole/docs/video-playback.md`（索引入口 `devconsole/AGENTS.md`）。
+> 本文只讲**插件作者**需要知道的：如何正确产出 `video` block、以及影视站「播放页解析」。DevConsole/宿主如何播放、代理重写、处理 Cloudflare 与浏览器兼容，属宿主侧实现，见 `devconsole/docs/video-playback.md`（索引入口 `devconsole/AGENTS.md`）。
 
 ## 适用场景
 
@@ -15,17 +15,17 @@
 ```typescript
 {
   type: 'video'
-  url?: string             // 可选（ADR-0026）：视频流原始 URL（m3u8 或直链）；缺省时必须带 target.play
+  url?: string             // 可选：视频流原始 URL（m3u8 或直链）；缺省时必须带 target.play
   target?: { action: 'play', url: string }  // 出流入口 URL（详情页/播放页），宿主懒调 fetchPlayUrl
   poster?: string          // 封面图
   duration?: number        // 时长（秒）
   platform?: string        // 平台标识（如 'manga_site_a'、'bilibili'）
   referer?: string         // 播放该视频时要求代理向上游声明的 Referer
-  qualities?: VideoQuality[]  // 可选（ADR-0029）：多清晰度档位（多 URL 型站点），url 为默认档
+  qualities?: VideoQuality[]  // 可选：多清晰度档位（多 URL 型站点），url 为默认档
 }
 ```
 
-`qualities` 与 master playlist 的关系见 `data-model.md`「视频清晰度（ADR-0029）」节：
+`qualities` 与 master playlist 的关系见 `data-model.md`「视频清晰度」节：
 **多 URL 型站点显式声明各档 URL；master playlist 型（单个 m3u8 含 `#EXT-X-STREAM-INF`
 多码率）零声明——宿主播放器自动渲染清晰度菜单**。`fetchPlayUrl` 返回的 `PlayUrlResult`
 同样可带 `qualities`（懒解析时才出多档的站点用）。
@@ -65,7 +65,7 @@ blocks.push({
 
 > 哪些子资源走代理、哪些必须浏览器直连（如受 Cloudflare 保护的 `#EXT-X-KEY`），由宿主在播放时重写 HLS 清单决定，插件无需也无法干预。
 
-## 播放页解析（fetchPlayUrl，ADR-0020）
+## 播放页解析（fetchPlayUrl）
 
 影视站的剧集 URL 是播放页（含播放器配置），不是媒体 URL。插件产出 `episodes` block（`lines[].episodes[].url` = 播放页 URL）+ 实现 `fetchPlayUrl`，把播放页解析成最终视频流：
 
@@ -140,7 +140,7 @@ KVS（Kernel Video Sharing）站的详情页内嵌 `flashvars`（`video_url` / `
   document 响应体），渲染后 DOM 只用于确认播放行为。
 - **解析**：内联 m3u8 正则提取时必须同时命中播放器上下文
   （`Hls.isSupported|hls.loadSource|new Hls`），避免误命中无关脚本；`&amp;` 解实体；
-  master playlist（含 `#EXT-X-STREAM-INF`，curl 拉一次实测确认）按 ADR-0029
+  master playlist（含 `#EXT-X-STREAM-INF`，curl 拉一次实测确认）按 
   零声明 `qualities`。
 - **兜底链**：`video source[size]`（多 URL 型）→ 内联 m3u8（master 型）→
   `<link rel="preload" as="video" href="…mp4">`，三者皆无才抛错（带 URL 与缺失形态指引）。

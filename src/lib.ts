@@ -6,7 +6,7 @@ export type { RunOptions } from './commands/run.js'
 export { loadPlugin } from './plugin-loader.js'
 export type { LoadedPlugin } from './plugin-loader.js'
 export { parsePluginMeta } from './types.js'
-// 卡片 DSL 校验（ADR-0050）：DevConsole 预览的「整卡回退」判定必须与本出口同源，
+// 卡片 DSL 校验：DevConsole 预览的「整卡回退」判定必须与本出口同源，
 // 禁各宿主自写一套（曾出现「未知 root」三端判得不一样，见 contracts/conformance/card-root.json）
 export { validateCardDSL, shouldFallbackCard, CARD_LIMITS } from './card-dsl.js'
 export type { CardValidation } from './card-dsl.js'

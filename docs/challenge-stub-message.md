@@ -1,9 +1,9 @@
 # 浏览器桩挑战文案（runtime 宿主侧，已关闭）
 
 `src/runtime/browser.ts` 的 `createBrowserAPI()` 在无浏览器时恒抛 `code == 'CHALLENGE'`
-的指引错（ADR-0043；`--fixture` 模式由 `commands/run.ts` 覆盖为快照返回，不经过此分支）。
+的指引错（`--fixture` 模式由 `commands/run.ts` 覆盖为快照返回，不经过此分支）。
 
-## 已关闭：文案统一构造（ADR-0052）
+## 已关闭：文案统一构造
 
 旧已知问题（桩文案写死 `anime_site_a:` 前缀，新 L3 插件在线跑透出他站前缀）已连根拔掉：
 宿主抛错一律走 `src/runtime/challenge.ts` 的 `challengeError(url, status)` 统一构造

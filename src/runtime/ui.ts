@@ -1,7 +1,7 @@
 import type { UiPrompt, UiRequestHandler, UiResponse, UiButton } from '../types.js'
 
 /**
- * 创建 $lib.ui 运行时：插件在 run 中途直问用户的交互信道（ADR-0006）。
+ * 创建 $lib.ui 运行时：插件在 run 中途直问用户的交互信道。
  *
  * 与 `$lib.http` 同构——都是「暂停 run、等外部系统返回」的异步原语：
  * http 暂停等网络，ui 暂停等人类。`onUiRequest` 由宿主提供：
@@ -11,7 +11,7 @@ import type { UiPrompt, UiRequestHandler, UiResponse, UiButton } from '../types.
  *     message/launchUrl 静默 no-op（不返回插件依赖的值，不藏 bug）。
  *
  * 窄口径：仅收「插件直问」类（验证码/确认/toast/开链接），不含结构化选择器（那是多 run 流）。
- * 详见 runtime/AGENTS.md「$lib.ui 运行时（ADR-0006）」。
+ * 详见 runtime/AGENTS.md「$lib.ui 运行时」。
  */
 export function createUiAPI(onUiRequest?: UiRequestHandler) {
   async function request(prompt: UiPrompt): Promise<UiResponse> {

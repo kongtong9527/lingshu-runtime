@@ -34,7 +34,7 @@
  * `setTimeout` / `setInterval` / 原生 `Buffer` / `URL` 全局——网络统一走 `$lib.http`，
  * 解析走 `$lib.cheerio`，二进制走 `$lib.Buffer`。
  * 地址解析优先用下方的无正则 helper（`splitPath` / `isHttpUrl`），类型分流优先用
- * `context.channel`（ADR-0064），正则只留在「文本清洗 / 站点原文匹配」两类。
+ * `context.channel`，正则只留在「文本清洗 / 站点原文匹配」两类。
  */
 
 // ===== 站点常量（TODO：按目标源填写）=====
@@ -93,7 +93,7 @@ function splitPath(path) {
 }
 
 /**
- * 通道决议（ADR-0064）：有 `context.channel` 即用它（新宿主经 `Listing.channel` /
+ * 通道决议：有 `context.channel` 即用它（新宿主经 `Listing.channel` /
  * `PageJumpTarget.list.channel` 透传，插件声明即分派、零正则）；缺省才回退到按 `url`
  * 判定的旧函数（旧宿主 / 裸 `--url` 调试的单点正则，勿在各分支重复写）。
  */
@@ -104,7 +104,7 @@ function resolveChannel(ctx, fallbackFromUrl) {
 }
 
 /**
- * 取路径：剥掉协议+域名与 query/hash。**页面通道（ADR-0025）按 URL 分派形态时必须用它**——
+ * 取路径：剥掉协议+域名与 query/hash。**页面通道按 URL 分派形态时必须用它**——
  * `context.url` 是完整绝对地址（`https://host/path/`），直接拿 `/^\/tags\/?$/` 这类正则判
  * 一律不命中，会整体落进兜底分支（该报错指路的页静默走错分支、索引页当列表解析成 0 条）。
  */
@@ -253,7 +253,7 @@ module.exports = {
    * 获取内容列表。必须返回 `ListResult`（`{ items, pagination?, layout? }`），
    * 不要返回裸数组。`pagination` 缺省 = 该源无分页概念，不要伪造 `hasMore`。
    *
-   * 列表页**自己带筛选控件**时随结果声明 `filters`（ADR-0066，与 `Listing.filters` 同型同编码：
+   * 列表页**自己带筛选控件**时随结果声明 `filters`（与 `Listing.filters` 同型同编码：
    * `[{ name, key, type:'select', items:[{id,name}] }]`）——宿主在落地列表页渲染筛选行，
    * 选中项并入 `category` 再回调本方法的同一个 `url`。用于「**只有抓到页面才知道**」的选项
    * （按页不同、且只活在 HTML 里的控件）；选项来自卡片就知道的静态筛选走
@@ -263,7 +263,7 @@ module.exports = {
    * @param {Object} [context]
    * @param {string} [context.category] - 组合查询串（与 getCategories 的 key 对齐）
    * @param {string} [context.url] - 页面通道：任意列表页 URL（合集/专题/分类落页），按 URL 分派
-   * @param {string} [context.channel] - 列表通道标识（ADR-0064）：`Listing.channel` /
+   * @param {string} [context.channel] - 列表通道标识：`Listing.channel` /
    *   `PageJumpTarget.list.channel` 的透传，有则优先按它分派、无则回退按 url 判定
    * @param {number} [context.page] - 页码（从 1 开始；通道页必须消费它，不能只从 URL 反解析页码）
    * @param {number} [context.pageSize] - 每页数量
@@ -273,7 +273,7 @@ module.exports = {
   async fetchList(context) {
     const ctx = context || {}
     const params = parseCategory(ctx.category)
-    // 通道优先（ADR-0064）：新宿主恒带 channel，零正则；旧宿主/裸 --url 才走回退函数。
+    // 通道优先：新宿主恒带 channel，零正则；旧宿主/裸 --url 才走回退函数。
     // const channel = resolveChannel(ctx, (url) => classifyByUrl(pathOf(url)))
     // switch (channel) { case 'video-list': ...; case 'album-list': ...; }
     const channelUrl = String(ctx.url || '')
@@ -439,7 +439,7 @@ module.exports = {
    *   覆写 DOM），插件不经前端故天然成立。**门槛也可能只体现为「前端自己少传了一个参数」**
    *   （如访客请求带 `&is_trailer=1` 只拿预告 + 播放器挂 `:max-duration="30"`）——
    *   此处一律**不读 role/max-duration/join 按钮**，出流以接口是否给了地址为准；
-   *   但要在列表 `tags` / 详情状态块**如实标注**这是会员内容（ADR-0061）。
+   *   但要在列表 `tags` / 详情状态块**如实标注**这是会员内容。
    * - **时效签名地址必须现算**：CDN 路径带 `,<过期unix秒>` 时（实测 TTL 可能只有 20 分钟），
    *   详情页只出懒播放占位（`video` 无 `url` + `target.play`），绝不内联快照里的地址。
    *
@@ -519,7 +519,7 @@ module.exports = {
    * `filters`**（组合串经 `TagContext.category` 回 `getTags`）。**日期/关键词这类文本档**
    * 用 `type:'text'`（`placeholder` 给格式），`fetchList` 里给缺省值——它常是端点的必需参数、
    * 缺参还可能报与原因无关的「网络异常」（详见 references/pitfalls.md）。
-   * 通道标识（ADR-0064）：多形态站给每个叶子写 `channel`（取值自定，如 'video-list' /
+   * 通道标识：多形态站给每个叶子写 `channel`（取值自定，如 'video-list' /
    * 'album-list'），宿主透传进 `fetchList` 的 `context.channel`；`target: { action:'list' }`
    * 同样带 `channel`。插件优先按 channel 分派、无则回退 URL 正则——新链路零正则。
    * @returns {Promise<import('lingshu-runtime').Listing[]>}

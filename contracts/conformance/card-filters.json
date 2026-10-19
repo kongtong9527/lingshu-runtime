@@ -1,6 +1,6 @@
 {
   "id": "card-filters",
-  "title": "筛选组（CategoryGroup）与分节/联动（ADR-0021/0063/0066）",
+  "title": "筛选组（CategoryGroup）与分节/联动",
   "note": "卡片跳转目标可携带落地页筛选栏；本语料覆盖 CategoryGroup 全 15 字段与四种子结构（叶子/分节/可见条件/sort 默认方向）。宿主渲染与联动求值在 iOS FilterState、DevConsole 预览、runtime 校验三处同口径。",
   "cases": [
     {

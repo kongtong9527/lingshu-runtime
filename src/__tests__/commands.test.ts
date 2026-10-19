@@ -538,7 +538,7 @@ module.exports = {
   })
 })
 
-describe('executeRun play 成功/失败路径（ADR-0020 播放页解析）', () => {
+describe('executeRun play 成功/失败路径（播放页解析）', () => {
   it('play 传入播放页 URL 时调用 fetchPlayUrl 返回视频流', async () => {
     const dir = trackDir(path.join(TMP, `lingshu-play-${process.pid}-${Date.now()}`))
     const f = writeFile(
@@ -650,7 +650,7 @@ module.exports = {
     expect(joined).toContain('目录条目 o=mv')
   })
 
-  it('ADR-0021：目录页带 filters 时输出筛选组摘要，并用首选项组合验证；验证失败只提示不判失败', async () => {
+  it('目录页带 filters 时输出筛选组摘要，并用首选项组合验证；验证失败只提示不判失败', async () => {
     const dir = trackDir(path.join(TMP, `lingshu-lscmd-f-${process.pid}-${Date.now()}`))
     writeFile(
       dir,
@@ -703,7 +703,7 @@ module.exports = {
     expect(joined).toContain('filters: 无')
   })
 
-  it('ADR-0021：目录页 filters 验证失败只提示、目录页本身失败才判失败', async () => {
+  it('目录页 filters 验证失败只提示、目录页本身失败才判失败', async () => {
     const dir = trackDir(path.join(TMP, `lingshu-lscmd-err-${process.pid}-${Date.now()}`))
     writeFile(
       dir,

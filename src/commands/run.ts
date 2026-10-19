@@ -9,13 +9,13 @@ import { isChallengeResponse, challengeError } from '../runtime/challenge.js'
 
 export interface RunOptions {
   page?: string
-  /** 筛选组合串（ADR-0014 编码）：list/search 走 `PluginContext.category`，
+  /** 筛选组合串（编码）：list/search 走 `PluginContext.category`，
    *  tags 走 `TagContext.category`（标签索引页自己的筛选，如 kvs_site_a `type=album`）——
    *  两者同口径（目录页筛选组 key=id），只是落到的 context 字段不同。 */
   category?: string
-  /** 页面通道（ADR-0025）：list 用的任意页面 URL，透传进 PluginContext.url */
+  /** 页面通道：list 用的任意页面 URL，透传进 PluginContext.url */
   url?: string
-  /** 列表通道标识（ADR-0064）：list/search 用，原样透传进 PluginContext.channel */
+  /** 列表通道标识：list/search 用，原样透传进 PluginContext.channel */
   channel?: string
   fixture?: string
   dir?: string
@@ -25,19 +25,19 @@ export interface RunOptions {
   onRequest?: RequestRecorder
   /** 用户偏好值（按 run 注入为 $lib.settings，只读、不持久） */
   settings?: Record<string, SettingValue>
-  /** 共享 cookie jar：跨 run 复用登录态（见 ADR-0005） */
+  /** 共享 cookie jar：跨 run 复用登录态 */
   cookieStore?: CookieJar
   /** 宿主从表单收集、回传给写侧动作（如 login）的输入值 */
   inputs?: Record<string, string>
   /** 通用调用参数（invoke 用：透传给插件同名导出） */
   params?: Record<string, unknown>
-  /** $lib.ui 的宿主处理器（ADR-0006）：插件中途直问用户时经此要结果。DevConsole 注入桥接 */
+  /** $lib.ui 的宿主处理器：插件中途直问用户时经此要结果。DevConsole 注入桥接 */
   onUiRequest?: UiRequestHandler
   /**
-   * `$lib.browser.getHtml` 的宿主注入（ADR-0045）。
+   * `$lib.browser.getHtml` 的宿主注入。
    * 缺省不注入 = 存根恒抛 CHALLENGE（runtime/CLI 纯 Node，无浏览器可依）；
    * DevConsole 注入 headed sidecar 抓取。`--fixture` 优先于本注入（离线短路）。
-   * opts.mode（ADR-0046）：'persistent'（默认，落盘复用）| 'ephemeral'（调用级即焚）；
+   * opts.mode：'persistent'（默认，落盘复用）| 'ephemeral'（调用级即焚）；
    * runtime CLI 永不传本项（保持纯 Node），仅 DevConsole 按 run 级决定后透传。
    */
   onBrowserFetch?: (url: string, opts?: { headers?: Record<string, string>; timeout?: number; userAgent?: string; mode?: 'persistent' | 'ephemeral' }) => Promise<HttpResponse>
@@ -206,7 +206,7 @@ function buildSandbox(options: RunOptions): Sandbox {
       return { status: 200, headers: { 'x-lingshu-browser': 'fixture' }, body }
     }
   } else if (options.onBrowserFetch) {
-    // 宿主浏览器通道注入（ADR-0045）：DevConsole headed sidecar 经此进入；
+    // 宿主浏览器通道注入：DevConsole headed sidecar 经此进入；
     // runtime CLI 永不传本项（保持纯 Node，Q7）。记录 method=BROWSER 以区直连。
     // $lib 边界统一判挑战：通道实现只管原文透出（含 403 挑战页），挑战识别与抛错
     // 在此一处（与 $lib.http.get 同表），插件不再写判定。
@@ -321,7 +321,7 @@ export async function executeRun(
     if (typeof plugin.fetchPlayUrl !== 'function') {
       throw new Error('插件不支持 fetchPlayUrl')
     }
-    // 语义泛化（ADR-0026）：target 为「出流入口 URL」——详情页或播放页，fetchPlayUrl 解析出最终流
+    // 语义泛化：target 为「出流入口 URL」——详情页或播放页，fetchPlayUrl 解析出最终流
     return plugin.fetchPlayUrl(target)
   }
 
@@ -370,7 +370,7 @@ export async function executeRun(
     if (typeof plugin.login !== 'function') {
       throw new Error('插件不支持 login')
     }
-    // 宿主从 loginFields 收集的值经 inputs 回传；声明式交互的回传信道（ADR-0005）
+    // 宿主从 loginFields 收集的值经 inputs 回传；声明式交互的回传信道
     return plugin.login(options.inputs ?? {})
   }
 

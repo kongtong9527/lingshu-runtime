@@ -27,7 +27,7 @@ program
     '筛选组合串（list/search/tags 用，如 region=cn&type=rexue；tags 为索引页自己的筛选，如 type=album）',
   )
   .option('--url <url>', '页面通道（list 用）：任意列表页面 URL，插件按 URL 分派解析；explore 用：探索页标识（listings-first，getExplore 的 context.url）')
-  .option('--channel <id>', '列表通道标识（ADR-0064）：原样透传进 PluginContext.channel，插件优先按它分派（缺省回退 URL 正则）')
+  .option('--channel <id>', '列表通道标识：原样透传进 PluginContext.channel，插件优先按它分派（缺省回退 URL 正则）')
   .option('--fixture <path>', '使用本地快照替代网络请求（list / detail / reading / play / categories / listings / explore / tags）；传目录则读 <dir>/index.json 的 routes 按 URL 逐条匹配，多跳流程用这个')
   .option('--settings <json>', '用户偏好 JSON（注入 $lib.settings，如 \'{"apiLine":"2","hd":true}\'）')
   .option('--inputs <json>', '登录表单输入 JSON（login 用，如 \'{"username":"x","password":"y"}\'）')

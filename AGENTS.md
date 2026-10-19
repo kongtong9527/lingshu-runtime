@@ -13,11 +13,11 @@
   **实现里禁止给可选参数写 JS 默认值**（`options = {}` 会让 `fn.length` 截断、两侧口径不再可比），可选性用 `??`/判空表达。
   **另含 L4 版本腿与注入面指纹**（见下面那条红线）。
 - **门 3 conformance 语料**：`contracts/conformance/*.json` 同时喂 schema 与 `validateCardDSL`；**schema 声明的每个字段都必须被某个合法语料真实用到**（加了字段不补语料即红）。补 `counts`：`node scripts/contract-gates/conformance.mjs --record`（只补缺失值，CI 不得带）。
-- **门 0 命名**：旧名 `simulator` 的路径/包名形态零回退（历史 ADR 正文与 `simulator-debugging.md` 文件名是**有意保留**的例外）。
+- **门 0 命名**：旧名 `simulator` 的路径/包名形态零回退（历史内部设计记录正文与 `simulator-debugging.md` 文件名是**有意保留**的例外）。
 
 **CLI 版本号必须从 `package.json` 取，勿写死（勿回退）**：`program.version(packageVersion())`（`src/pkg-version.ts`）——写死会静默漂移（2026-10 实测：包已发到 `1.0.1`，`lingshu --version` 仍报 `1.0.0`；那是用户确认「我装的是哪一版」的唯一入口），回归锁 `src/__tests__/cli-version.test.ts`。
 
-**契约版本与包版本是两条号段，勿再互锁（勿回退）**：`contracts/lib-api.json` 的 `contractVersion`（插件 `minRuntimeVersion` 的基准）**只随 `$lib` 注入面变更递增**；`runtime/package.json` 的 `version` 随每次发布递增。门 2 的 L4 腿只要求 **包版本 ≥ 契约版本**，且 iOS 常量与契约版本**恒等**；**改了注入面必须做一次显式决定**（递增契约版本，或 `node scripts/contract-gates/run.mjs --record-surface-hash` 声明「面变了但语义未变」——指纹 `surfaceHash` 会拦）（口径与三条号段对照表见 `contracts/lib-api.md` §0，决策见 ADR-0069）。
+**契约版本与包版本是两条号段，勿再互锁（勿回退）**：`contracts/lib-api.json` 的 `contractVersion`（插件 `minRuntimeVersion` 的基准）**只随 `$lib` 注入面变更递增**；`runtime/package.json` 的 `version` 随每次发布递增。门 2 的 L4 腿只要求 **包版本 ≥ 契约版本**，且 iOS 常量与契约版本**恒等**；**改了注入面必须做一次显式决定**（递增契约版本，或 `node scripts/contract-gates/run.mjs --record-surface-hash` 声明「面变了但语义未变」——指纹 `surfaceHash` 会拦）（口径与三条号段对照表见 `contracts/lib-api.md` §0，决策）。
 
 **卡片校验出口单一来源（勿在宿主里自写一套）**：`validateCardDSL` / `shouldFallbackCard` / `CARD_LIMITS` 从 `src/lib.ts` 出口给 Node 宿主复用（DevConsole 预览已改 import）。**未知 root ⇒ 整卡回退**（`KNOWN_NODE_TYPES`），未知**子**节点才跳节点——三端同口径，由 `contracts/conformance/card-root.json` 锁定。
 
@@ -36,17 +36,17 @@
 | `$lib.storage` | `runtime/storage.ts` | 文件持久 KV |
 | `$lib.settings` | `runtime/settings.ts` | 用户偏好（按 run 注入、只读） |
 | `$lib.util` | `runtime/util.ts` | randomUUID/randomInt/randomDouble |
-| `$lib.ui` | `runtime/ui.ts` `createUiAPI` | 插件直问用户：showInputDialog/confirm/showMessage/launchUrl（ADR-0006） |
-| `$lib.browser` | `runtime/browser.ts` `createBrowserAPI` | 列表详情浏览器抓取存根：无浏览器恒抛 CHALLENGE（ADR-0043） |
+| `$lib.ui` | `runtime/ui.ts` `createUiAPI` | 插件直问用户：showInputDialog/confirm/showMessage/launchUrl |
+| `$lib.browser` | `runtime/browser.ts` `createBrowserAPI` | 列表详情浏览器抓取存根：无浏览器恒抛 CHALLENGE |
 | 第三方库 | `lib-loader.ts` `loadJsLib` | CryptoJS/cheerio/dayjs/iconv-lite 等 |
 
-**L3 站点 CLI 政策（ADR-0045）**：runtime 保持纯 Node，L3 在线如实抛 `CHALLENGE`（exit 1 即正确行为，不视为缺陷）；离线验证一律 `--fixture`（同时覆盖 `browser.getHtml`）；禁止给 CLI 加 `--browser`/headless sidecar（在线复核只在 DevConsole headed 窗口做）。
+**L3 站点 CLI 政策**：runtime 保持纯 Node，L3 在线如实抛 `CHALLENGE`（exit 1 即正确行为，不视为缺陷）；离线验证一律 `--fixture`（同时覆盖 `browser.getHtml`）；禁止给 CLI 加 `--browser`/headless sidecar（在线复核只在 DevConsole headed 窗口做）。
 
 **fixture 两形态（勿只用单文件跑多跳动作）**：`--fixture` 传**文件** = 整份快照覆盖所有请求（单跳够用）；传**目录** = 读 `<dir>/index.json` 的 `routes` 按 URL 逐条匹配（可选 `headers` 条件做**请求头分流**），未命中**显式报错**。多跳动作（`play` 两跳、`getExplore` 1+N、`listings` 逐叶子）必须用目录形态——单文件会把 A 的响应喂给 B，症状是「JSON 解析失败」这类假故障；**同一 URL 两副面孔（判别开关是请求头）时必须给两条路由各挂 `headers`**，否则另一副静默拿到错内容（详见 docs/fixture-modes.md）。
 
-**危险能力显式屏蔽**：`require`/`process`/`Buffer`/`setTimeout`/`setInterval`/`setImmediate` 等置 `undefined`（见 `sandbox.ts`）。其中**定时器类**（setTimeout 等）刻意禁用——引入时间相关的隐式行为、破坏可重放性、且无对应宿主语义。但「异步暂停」本身不禁：`$lib.http`（暂停等网络）与 `$lib.ui`（暂停等人类，ADR-0006）都是合法的、可录放的异步原语（经 `onRequest`/`onUiRequest` 由宿主提供结果，fixture 可回放）。二者同构——确定性来自「外部输入被记录、可重放」，而非「无暂停」。ADR-0005「禁 callback 撞确定性」的理由由此作废（见 ADR-0006）。新增异步能力前判它属于哪类：定时器/隐式时间 → 禁；显式暂停等外部系统、经宿主回调拿结果 → 许。
+**危险能力显式屏蔽**：`require`/`process`/`Buffer`/`setTimeout`/`setInterval`/`setImmediate` 等置 `undefined`（见 `sandbox.ts`）。其中**定时器类**（setTimeout 等）刻意禁用——引入时间相关的隐式行为、破坏可重放性、且无对应宿主语义。但「异步暂停」本身不禁：`$lib.http`（暂停等网络）与 `$lib.ui`（暂停等人类）都是合法的、可录放的异步原语（经 `onRequest`/`onUiRequest` 由宿主提供结果，fixture 可回放）。二者同构——确定性来自「外部输入被记录、可重放」，而非「无暂停」。「禁 callback 撞确定性」的理由由此作废。新增异步能力前判它属于哪类：定时器/隐式时间 → 禁；显式暂停等外部系统、经宿主回调拿结果 → 许。
 
-## cookie jar 跨 run 共享（ADR-0005）
+## cookie jar 跨 run 共享
 
 `createHttpAPI(onRequest?, sharedStore?)` 的 cookie jar 默认 per-run 短命（随 sandbox 销毁）。**登录场景必须传共享 jar**：登录 run 写入的 session cookie，后续读取 run 才能带上，否则「登录后读取」不成立。
 
@@ -65,23 +65,23 @@
 
 现有动作：`list` / `detail` / `search` / `reading` / **`play`** / `categories` / `listings` / `explore` / `tags` / `setting-action` / `login` / `logout` / `me` / `invoke`（最后一个为通用写侧调用：方法名与参数全由调用方给出，宿主通用直调、不映射方法）。
 
-> `list` 动作支持 **`--url <url>`**（页面通道，ADR-0025）：透传进 `PluginContext.url`，插件按
+> `list` 动作支持 **`--url <url>`**（页面通道）：透传进 `PluginContext.url`，插件按
 > URL 分派到任意列表页解析；`--url` 与 `--category` 可并存（插件定优先级）。
-> 另支持 **`--channel <id>`**（列表通道标识，ADR-0064）：原样透传进 `PluginContext.channel`，
+> 另支持 **`--channel <id>`**（列表通道标识）：原样透传进 `PluginContext.channel`，
 > 插件优先按它分派、无则回退 URL 正则（`listings` 逐叶子透传 `Listing.channel`）。
 
-## explore 动作（ADR-0030 探索页条目）
+## explore 动作（探索页条目）
 
-`explore` 分派到 `plugin.getExplore(context?)`。**listings-first（ADR-0030）**：`--url`
+`explore` 分派到 `plugin.getExplore(context?)`。**listings-first**：`--url`
 为**探索页标识**（对应 `getListings()` 里 `kind:'explore'` 条目的 url 字段），透传为
 `context.url`（无 url 即 `undefined` = 默认探索页）。旧插件忽略多参零改动；带 context
 分支的新插件可按 url 返回不同分区（多探索页）。
 
-## tags 动作（ADR-0037 标签索引页 + ADR-0038 分页 + ADR-0062 页级筛选）
+## tags 动作（标签索引页 + 分页 + 页级筛选）
 
-`tags` 分派到 `plugin.getTags(context?)`（`TagContext={page?, category?}`，无参时零参调用 legacy 行为），返回 `TagIndex`（legacy 裸 `TagGroup[]` 全量云）或 `TagResult`（`{groups, pagination}` 分页云）；`--page/--category` 透传 context——`category` 是**标签索引页自己的筛选组合串**（与 `list` 的 `category` 同口径同编码，`RunOptions.category` 一字段两用途、按动作分派），如 kvs_site_a `type=album`（换抓图集侧索引页）。**`TagContext.sort` 已退役**（ADR-0062：那曾是宿主硬编码的单站排序档，对无此能力的站是假能力；服务端排序现在是普通筛选组）。**标签索引不是视频列表**：`fetchList({url:'/tags/'})` 须报错指引到 `getTags`，标签视频列表走 `/tags/<slug>/` 页面通道。`--fixture` 覆盖单次索引抓取（kvs_site_b fixtures：`tags.html`）。
+`tags` 分派到 `plugin.getTags(context?)`（`TagContext={page?, category?}`，无参时零参调用 legacy 行为），返回 `TagIndex`（legacy 裸 `TagGroup[]` 全量云）或 `TagResult`（`{groups, pagination}` 分页云）；`--page/--category` 透传 context——`category` 是**标签索引页自己的筛选组合串**（与 `list` 的 `category` 同口径同编码，`RunOptions.category` 一字段两用途、按动作分派），如 kvs_site_a `type=album`（换抓图集侧索引页）。**`TagContext.sort` 已退役**（那曾是宿主硬编码的单站排序档，对无此能力的站是假能力；服务端排序现在是普通筛选组）。**标签索引不是视频列表**：`fetchList({url:'/tags/'})` 须报错指引到 `getTags`，标签视频列表走 `/tags/<slug>/` 页面通道。`--fixture` 覆盖单次索引抓取（kvs_site_b fixtures：`tags.html`）。
 
-## play 动作（ADR-0020 + ADR-0026 语义泛化）
+## play 动作（语义泛化）
 
 `play <出流入口URL>`（target 必填）：分派到 `plugin.fetchPlayUrl(url)`，返回 `PlayUrlResult`
 `{url, referer?, platform?, poster?, duration?}`。**target 泛化**：可为剧集播放页、视频详情页，
@@ -90,33 +90,33 @@ m3u8/直链），复用 `$lib.http`/`$lib.CryptoJS`。`--fixture` 只覆盖第�
 解析接口等后续跳需在线；离线验证建议以「第一跳能解出入口页内嵌参数」为断言，完整链路走在线。
 plug-in 侧契约见 SKILL「懒播放解析与文本阅读」。
 
-## listings 命令（ADR-0015 / ADR-0021 / ADR-0025 导航树 / ADR-0030 探索页条目）
+## listings 命令（/ / 导航树 / 探索页条目）
 
 `node runtime/dist/index.js listings <id> --dir lingshu-plugins`：跑 `getListings()`
 后**递归验证导航树**：分组结点（带 `children`）只打印并递归子项；**叶子目录页用其 `url`
-（页面通道，ADR-0025）优先、否则 `category`** 调 `fetchList` 验证能出条目（两者都缺省用
-默认列表）。**ADR-0030：`kind:'explore'` 的叶子改调 `getExplore`**（带 url = 探索页标识
+（页面通道）优先、否则 `category`** 调 `fetchList` 验证能出条目（两者都缺省用
+默认列表）。**`kind:'explore'` 的叶子改调 `getExplore`**（带 url = 探索页标识
 透传 context，无 url = 默认探索页），验证返回分区数；explore 条目不消费 filters（打印
-「探索页不消费筛选」提示）。**ADR-0037 + ADR-0038：`kind:'tags'` 的叶子改调 `getTags`**（`url` 仅展示/回退），
+「探索页不消费筛选」提示）。** + `kind:'tags'` 的叶子改调 `getTags`**（`url` 仅展示/回退），
 验证归一化双形态（Array = legacy 全量，Object = 分页信封，打印 `[page=N hasMore=]`），
-返回组数/标签数（空索引判失败）；**ADR-0062 起 tags 叶子同样消费 `filters`**——打印筛选摘要
+返回组数/标签数（空索引判失败）；**tags 叶子同样消费 `filters`**——打印筛选摘要
 并**用 `getTags` 验证组合串**（不是 `fetchList`）。
 输出带缩进展示树形层级。实现见 `commands/listings.ts`
 （内部复用 `executeRun` 的 `listings` / `list` / `explore` / `tags` 动作，`--fixture` 可选）。
 
-**ADR-0021（目录页筛选）**：listing 可携带 `filters: CategoryGroup[]`。命令对声明了
+**（目录页筛选）**：listing 可携带 `filters: CategoryGroup[]`。命令对声明了
 filters 的目录页：打印筛选组摘要（组名 × 选项数，分节组按节计数并取首节首叶子作首选项，`display:'tags'` 后缀 `·tag`），并**用「category + 每组前 2 个非空 id 选项」组合查询串调消费该筛选的动作**
 （`list` 叶子走 `fetchList`、`tags` 叶子走 `getTags`，带 `url` 时一并传）验证筛选参数能被消费。**只验首项不够**：类型开关的首项往往就是 listing 自己那页，会漏掉真正换页的那一支（kvs_site_a `type=album`）。筛选验证是**增强信息而非硬门槛**：
 目录页本身 fetchList 出条目才是通过标准；筛选验证失败（如站点反爬拦截 `/show/`，
 movie_site_c 案例）只提示不置 exitCode，与「不冒充能力」原则一致——声明了筛选但站点
 不可达时，命令如实展示而非误判失败。
 
-**筛选组联动（ADR-0063，勿回退）**：联动静态校验收敛在 `src/filters-linkage.ts`
+**筛选组联动（勿回退）**：联动静态校验收敛在 `src/filters-linkage.ts`
 （5 类 error 判失败 exitCode=1，覆盖不全只 warn）；摘要给联动子组打 `→父key` 标记，
 并逐父值 × 子首选项打组合探针（上限 8 组，只提示不判失败）。校验逻辑禁各命令自写一套。
 
-**落页自声明筛选（ADR-0066）**：叶子额外打印一行 `落页自声明筛选（ListResult.filters）: 组名(N项) / …`——
-它与目录页内嵌 `filters`（ADR-0021，上面「filters: …」那行）是**两个来源**，刻意分开打印；
+**落页自声明筛选**：叶子额外打印一行 `落页自声明筛选（ListResult.filters）: 组名(N项) / …`——
+它与目录页内嵌 `filters`（上面「filters: …」那行）是**两个来源**，刻意分开打印；
 只在结果真带 `filters` 时出现，不消费也不判失败（那是列表页属性，不是目录页属性）。
 
 **网站原页标注（2026-10）**：每个叶子目录页额外打印 `[原页=<地址>]` 或 `·无原页`，取法与
@@ -131,9 +131,9 @@ iOS 宿主 `WebsiteOrigin.listingOriginAddress` **同一口径**（显式 `origi
 判定原则：一个目录页 fetchList 抛错或返回空数组即视为未通过（`exitCode = 1`），
 但输出仍继续验证其余页签，便于一次看清全部目录页状态。
 
-## 写侧交互运行时（ADR-0005 + ADR-0006）
+## 写侧交互运行时
 
-人机交互进 Lingshu 分三个信道，按「时间位置 × 发起方」分界（详见 CONTEXT.md / ADR-0006）：
+人机交互进 Lingshu 分三个信道，按「时间位置 × 发起方」分界（详见 CONTEXT.md /）：
 
 - **字段 schema（pre-run、宿主编排）**：`LingshuPlugin.getAccountSchema?()` 声明 `loginFields`/`cookieFields`，宿主据此渲染登录表单，收集值经 `PluginContext.inputs` 回传。
 - **`login` 动作**：`executeRun` 分派到 `plugin.login(options.inputs ?? {})`，返回 `AccountLoginResult`。
@@ -141,7 +141,7 @@ iOS 宿主 `WebsiteOrigin.listingOriginAddress` **同一口径**（显式 `origi
 - **多 run 流（mid-run、宿主编排）**：宿主 owns 渲染面的结构化选择（如收藏 `loadFolders` → 选夹子 → `addOrDelFavorite`），拆成多个 run、宿主编排。
 - **`$lib.ui`（mid-run、插件直发，见下节）**：插件在 run 中途直问用户（验证码/确认/toast/开链接）。
 
-## `$lib.ui` 运行时（ADR-0006）
+## `$lib.ui` 运行时
 
 `runtime/ui.ts` `createUiAPI(onUiRequest?)`：插件直问用户的命令式信道，Promise 式 `await`（非 Venera callback）。窄口径——只收「插件直问」类（`showInputDialog`/`confirm`/`showMessage`/`launchUrl`），不含结构化选择器（那是多 run 流）。
 
@@ -166,7 +166,7 @@ iOS 宿主 `WebsiteOrigin.listingOriginAddress` **同一口径**（显式 `origi
 | 编程式 API 入口（`lib.ts` 出口政策、dist 消费面） | `docs/program-api.md` |
 | fixture 两形态（单文件 vs 目录 / `index.json` routes / 未命中报错） | `docs/fixture-modes.md` |
 
-**挑战识别下沉宿主（勿回退插件判定）**：`$lib.http.get` 命中共享表即抛统一 `CHALLENGE`（`runtime/challenge.ts` 构造，`Lingshu:` 前缀禁站名）；插件只留直连 + `assertParsed` 解析兜底，挑战原样上抛交宿主验证入口（**插件侧浏览器重抓已退役，ADR-0060**，见 docs/challenge-stub-message.md）。
+**挑战识别下沉宿主（勿回退插件判定）**：`$lib.http.get` 命中共享表即抛统一 `CHALLENGE`（`runtime/challenge.ts` 构造，`Lingshu:` 前缀禁站名）；插件只留直连 + `assertParsed` 解析兜底，挑战原样上抛交宿主验证入口（**插件侧浏览器重抓已退役，**，见 docs/challenge-stub-message.md）。
 
 **二进制走显式通道（勿用文本通道传字节）**：发二进制必须传 `Uint8Array`/`$lib.Buffer`（宿主按字节发出），收二进制必须 `responseType:'base64'` + `$lib.Buffer.from(body,'base64')`，gzip 经 `$lib.zlib` 字符串通道；文本 `body` 透传/解析二进制恒坏（详见 docs/binary-http.md）。
 

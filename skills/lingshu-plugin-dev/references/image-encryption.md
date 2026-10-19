@@ -90,7 +90,7 @@ const IMAGE_ENCRYPTION = {
 - 在支持资源代理的 DevConsole 中，解密响应的 MIME 类型正确，文件头能识别为 JPEG/PNG/GIF/WebP 等真实格式
 - 真实网络验证至少覆盖一张列表封面和一张详情正文图片；只检查 URL 存在不足以证明解密成功
 
-## 参数粒度（低优先级预留口子，ADR-0025）
+## 参数粒度（低优先级预留口子）
 
 `metadata.imageEncryption` 的常规形态是「一个返回对象携带一套全局参数」（key/iv/算法，
 列表封面、详情正文、gallery 共用）。当前**只承诺单套**——绝大多数站点（含 short_site_a、

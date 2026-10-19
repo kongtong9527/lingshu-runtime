@@ -85,7 +85,7 @@ jobs:
       # takes: the contract version (`contracts/lib-api.json` `contractVersion`) is a *different*
       # series — it only moves when the `$lib` injection surface changes, and gate 2's L4 leg only
       # requires package version >= contract version (iOS `PluginRuntimeContract.version` must equal
-      # the contract version). See docs/adr/0069.
+      # the contract version). See contracts/lib-api.md §0（三条号段对照表）.
       - name: Refuse to republish an existing version
         if: steps.ver.outputs.already == 'yes'
         run: |

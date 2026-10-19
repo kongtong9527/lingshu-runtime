@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { CategoryGroup } from '../types.js'
 import { linkedItemsFor, validateListingFilters } from '../filters-linkage.js'
 
-// 联动静态校验回归锁（ADR-0063，Q12 矩阵）：5 类 error + 覆盖不全 warn。
+// 联动静态校验回归锁（Q12 矩阵）：5 类 error + 覆盖不全 warn。
 function group(patch: Partial<CategoryGroup> & { name: string; key: string }): CategoryGroup {
   return { ...patch } as CategoryGroup
 }

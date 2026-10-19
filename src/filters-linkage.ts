@@ -1,7 +1,7 @@
 import type { CategoryGroup } from './types.js'
 
 /**
- * 筛选组联动静态校验（ADR-0063，Q12 矩阵）：
+ * 筛选组联动静态校验（Q12 矩阵）：
  * 纯函数、无副作用，供 runtime `listings` 命令与单测消费。
  * 运行期（DevConsole/iOS）对 1–5 永不白屏——未知父当恒显、环截断、缺边忽略（容差）；
  * 硬失败只发生在 CLI 发布门（exitCode）。
