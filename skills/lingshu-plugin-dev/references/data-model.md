@@ -1,6 +1,6 @@
 # 数据模型参考
 
-数据模型定义在 `runtime/src/types.ts`。插件返回的数据必须符合以下结构。
+数据模型以 `lingshu-runtime` 包导出类型为准（`import { ListResult } from 'lingshu-runtime'`，声明在包内 `dist/lib.d.ts`；母仓内对应 `runtime/src/types.ts`）。插件返回的数据必须符合以下结构。
 
 ## ListItem — 列表项
 

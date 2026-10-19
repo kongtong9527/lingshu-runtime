@@ -10,7 +10,7 @@
 
 ## 数据契约
 
-`ArticleDetail.blocks` 中的 `video` 块结构（见 `runtime/src/types.ts`）：
+`ArticleDetail.blocks` 中的 `video` 块结构（类型为包导出的 `ContentBlock` 联合中的 `video` 分支 + `VideoQuality`，`import { ContentBlock } from 'lingshu-runtime'`；母仓内为 `runtime/src/types.ts`）：
 
 ```typescript
 {

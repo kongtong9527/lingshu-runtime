@@ -2,8 +2,8 @@
 
 `ListItem.card?: CardDSL`——列表项的自定义卡片描述。每项自带现算 JSON（文字已填好），宿主原生渲染。有即渲染、无即回退老卡。根非法（含**未知 root 类型**）才整卡回退，未知**子**节点就地跳过，单图坏就地占位。详见 ADR-0050。
 
-> **字段级规范以 [`contracts/card-dsl.schema.json`](../../../contracts/card-dsl.schema.json) 为准**（JSON Schema 2020-12，随 runtime / iOS 仓发布）；本文件是用法与取舍说明。
-> 字段集由 `npm run contract:check` 的字段集合门三端互锁（schema ↔ `runtime/src/types.ts` ↔ iOS `CardModels.swift`），**新增字段必须同时改三处并补 `contracts/conformance/` 语料**，否则 CI 红。
+> **字段级规范以 `contracts/card-dsl.schema.json` 为准**（JSON Schema 2020-12；母仓与公开 `lingshu-runtime` 仓同名路径，npm 包用户改用包内运行时校验 `validateCardDSL` / `CARD_LIMITS`，见 `lingshu-runtime/card-dsl` 子路径出口）；本文件是用法与取舍说明。
+> 字段集由 `npm run contract:check` 的字段集合门三端互锁（schema ↔ `runtime/src/types.ts` ↔ iOS `CardModels.swift`），**新增字段必须同时改三处并补 `contracts/conformance/` 语料**，否则 CI 红（母仓维护用，第三方走公开仓 issue 提需求）。
 
 思路借 Egern Widget DSL，实现脱钩：根叫 `card`，元素集在其六件套上扩展。Egern 原文见 `https://egernapp.com/zh-CN/docs/configuration/widgets/`。
 

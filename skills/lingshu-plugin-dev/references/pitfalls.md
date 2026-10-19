@@ -661,8 +661,8 @@ return sections // 裸数组，勿包 { sections } 信封
 （见 `devconsole/server/src/browser-channel.ts` 注释）。
 
 **验证**：真页 fixture 配 403 状态跑 `fetchList` 照常出条目、宿主抛统一 `CHALLENGE`、
-普通 5xx 照旧抛错（断言见 `runtime/src/__tests__/anime_site_a-403-content.test.ts`；
-共享表强特征断言见 `runtime/src/__tests__/challenge.test.ts`）。
+普通 5xx 照旧抛错（断言见母仓回归锁 `runtime/src/__tests__/anime_site_a-403-content.test.ts`；
+共享表强特征断言见母仓回归锁 `runtime/src/__tests__/challenge.test.ts`）。
 
 **真实案例**：`anime_site_a.plugin.js`（2026-09：`BROWSER(headed-ephemeral)` 403
 + 真首页被两边同时误判 → 加否定门后 Node 403 + 真内容直解，常态连浏览器都不用；

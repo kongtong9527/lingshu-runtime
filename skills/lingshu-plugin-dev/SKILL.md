@@ -203,7 +203,7 @@ lingshu run <plugin-id> list --dir .
 ### 阶段 4：提交
 第三方（任意目录）默认流程：
 1. 把 `<plugin-id>.plugin.js` + `_fixtures/<plugin-id>/` 一起提交到**自己的插件仓库**（单文件 + 快照即完整交付）
-2. 若自建分发仓，按 `lingshu-plugins` 仓的 `manifest.json` 格式加一条（id/name/version/author/description/file/sourceUrl/categories/minRuntimeVersion），App 填你的 raw manifest 地址即可消费
+2. 若自建分发仓，按 [`references/manifest.md`](references/manifest.md) 的格式加一条（字段表 + 最小示例 + 三处一致校验），App 填你的 raw manifest 地址即可消费
 3. 若向官方 `lingshu-plugins` 投稿，先读该仓 `CONTENT-POLICY.md`（仅收公开、可匿名访问、`nsfw:0` 的源），按其 `CONTRIBUTING.md` 走 PR
 
 > 母仓等价：插件文件 + fixture + `manifest.json` 更新一起提交，再跑阶段 5。
@@ -331,3 +331,4 @@ module.exports = { /* ...其他导出 */, getAccountSchema, login }
 - 预设目录页分析与筛选准则（18 条）：`references/listings.md`
 - 踩坑记录全文（70 条）：`references/pitfalls.md`
 - 视频播放（HLS / m3u8 / `video` block 的 `referer`）：`references/video-playback.md`
+- 分发清单（`manifest.json` 字段表 + 最小示例 + 三处一致）：`references/manifest.md`

@@ -2,7 +2,7 @@
 
 插件运行在沙箱中，通过全局 `$lib` 命名空间访问全部能力。下方为完整参考。
 
-> 真实加载的第三方库见 `runtime/assets/js-lib/`，由 `runtime/src/lib-loader.ts` 在启动时加载到 `$lib`。
+> 真实加载的第三方库见包内 `assets/js-lib/`（母仓内为 `runtime/assets/js-lib/`），由启动时加载到 `$lib`（母仓加载器：`runtime/src/lib-loader.ts`）。
 
 ## $lib.http — 网络请求
 

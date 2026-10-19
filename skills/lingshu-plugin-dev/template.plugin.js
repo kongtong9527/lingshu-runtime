@@ -12,7 +12,8 @@
  * 灵枢插件模板（单文件自包含，不能 require/import 外部模块）。
  *
  * 用法（第三方任意目录，默认）：`lingshu init <plugin-id>` 生成骨架后，填好顶部元数据头
- * （id/name/version 必填；自建分发仓时 description 必须与 `manifest.json` 对应条目完全一致）。
+ * （id/name/version 必填；自建分发仓时 description 必须与 `manifest.json` 对应条目完全一致，
+ * 格式与三处一致校验见 `references/manifest.md`）。
  * 按阶段 1 的 fixture 与接口/选择器记录实现下面各方法，不需要的可选方法直接删掉
  * （不要留着抛错的空壳）。
  * 验证（插件所在目录，先 `lingshu --version` 确认全局 CLI 就绪）：
@@ -267,7 +268,7 @@ module.exports = {
    * @param {number} [context.page] - 页码（从 1 开始；通道页必须消费它，不能只从 URL 反解析页码）
    * @param {number} [context.pageSize] - 每页数量
    * @param {string} [context.cursor] - 游标（仅 cursor 策略回传上一页的 nextCursor）
-   * @returns {Promise<import('../../runtime/src/types').ListResult>}
+   * @returns {Promise<import('lingshu-runtime').ListResult>}
    */
   async fetchList(context) {
     const ctx = context || {}
@@ -337,7 +338,7 @@ module.exports = {
    * 与封面同 URL 的 image；有阅读页的站详情只出 `chapter` 入口，不要内联阅读图；
    * 信息能收尽收（分类/作者/日期/计数/标签/简介/封面/推荐，有则收录、无则省略、不伪造）。
    * @param {string} url - 详情页 URL（来自 ListItem.url）
-   * @returns {Promise<import('../../runtime/src/types').ArticleDetail>}
+   * @returns {Promise<import('lingshu-runtime').ArticleDetail>}
    */
   async fetchDetail(url) {
     const targetUrl = String(url || '')
@@ -403,7 +404,7 @@ module.exports = {
    * 如 `/get_image/…?i-acctoken=`）。取错**不报错**、宿主照常渲染，只是用户看到糊图；
    * 务必另收缩略图并断言「页数 == 站点声明张数」（见 data-model.md ReadingPage 节）。
    * @param {string} url - 阅读页 URL（章节/漫画阅读页面）
-   * @returns {Promise<import('../../runtime/src/types').ReadingPage>}
+   * @returns {Promise<import('lingshu-runtime').ReadingPage>}
    */
   async fetchReadingPage(url) {
     // const res = await request(url)
@@ -443,7 +444,7 @@ module.exports = {
    *   详情页只出懒播放占位（`video` 无 `url` + `target.play`），绝不内联快照里的地址。
    *
    * @param {string} url - 出流入口 URL
-   * @returns {Promise<import('../../runtime/src/types').PlayUrlResult>}
+   * @returns {Promise<import('lingshu-runtime').PlayUrlResult>}
    */
   async fetchPlayUrl(url) {
     // const html = (await request(url)).body
@@ -464,7 +465,7 @@ module.exports = {
    * 复用同一套卡片解析与分页判定。无搜索能力的源删除本方法。
    * @param {string} query - 查询词
    * @param {Object} [context] - 同 fetchList 上下文（page/category/url）
-   * @returns {Promise<import('../../runtime/src/types').ListResult>}
+   * @returns {Promise<import('lingshu-runtime').ListResult>}
    */
   async search(query, context) {
     // const page = pageNumber(context)
@@ -485,7 +486,7 @@ module.exports = {
    * 注意：`id` 只填参数值（如 `cn`），不要带 `key=` 前缀；应用时宿主按类型编码
    *（select: `key=id`；check: `key=id1,id2,-id3`；text: 编码后输入；sort: `key=id[,asc|desc]`），
    * 站点不支持多选/排除就不要声明 `check`/`canExclude`。
-   * @returns {Promise<import('../../runtime/src/types').CategoryGroup[]>}
+   * @returns {Promise<import('lingshu-runtime').CategoryGroup[]>}
    */
   async getCategories() {
     // return [
@@ -521,7 +522,7 @@ module.exports = {
    * 通道标识（ADR-0064）：多形态站给每个叶子写 `channel`（取值自定，如 'video-list' /
    * 'album-list'），宿主透传进 `fetchList` 的 `context.channel`；`target: { action:'list' }`
    * 同样带 `channel`。插件优先按 channel 分派、无则回退 URL 正则——新链路零正则。
-   * @returns {Promise<import('../../runtime/src/types').Listing[]>}
+   * @returns {Promise<import('lingshu-runtime').Listing[]>}
    */
   async getListings() {
     // return [
@@ -541,7 +542,7 @@ module.exports = {
    * 首页只有一个分区时不设 explore，做普通列表即可。
    * @param {Object} [context]
    * @param {string} [context.url] - 探索页标识
-   * @returns {Promise<import('../../runtime/src/types').ExploreFeed>}
+   * @returns {Promise<import('lingshu-runtime').ExploreFeed>}
    */
   async getExplore(context) {
     // const pick = String((context && context.url) || '')
@@ -563,7 +564,7 @@ module.exports = {
    * @param {Object} [context]
    * @param {number} [context.page]
    * @param {string} [context.category] 索引页筛选组合串（如 `type=album`、`sort=views`）
-   * @returns {Promise<import('../../runtime/src/types').TagIndex | import('../../runtime/src/types').TagResult>}
+   * @returns {Promise<import('lingshu-runtime').TagIndex | import('lingshu-runtime').TagResult>}
    */
   async getTags(context) {
     // const page = pageNumber(context)
