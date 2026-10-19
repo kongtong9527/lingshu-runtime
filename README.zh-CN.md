@@ -43,6 +43,27 @@
 
 ## 快速开始
 
+第三方插件开发者**无需克隆本仓**。全局安装运行时，在任意空目录开发：
+
+```bash
+npm i -g lingshu-runtime
+lingshu --version          # 确认全局 CLI 就绪
+mkdir my-plugins && cd my-plugins
+lingshu init <plugin-id>   # 生成 <plugin-id>.plugin.js + _fixtures/<plugin-id>/
+lingshu test <plugin-id> --dir .
+```
+
+开发技能包（开发流程、`$lib` 参考、卡片 DSL 参考、插件模板）随本包发布，
+位置在 [`skills/lingshu-plugin-dev/`](skills/lingshu-plugin-dev)，
+用 CLI 自己装进 agent 配置（无需另装 installer）：
+
+```bash
+lingshu skill install          # 全局，全部 agent（claude/cursor/codex/agents）
+lingshu skill install --project --agent claude   # 或：只装当前项目、只给一家
+```
+
+若要看源码再克隆本仓：
+
 ```bash
 git clone https://github.com/kongtong9527/lingshu-runtime.git
 cd lingshu-runtime
@@ -79,6 +100,8 @@ node dist/index.js listings example-plugin --dir /path/to/plugins
 只有显式传 `--dir` 才不会意外读到无关目录，所以上面的例子一律显式传。
 
 等价写法：`npm run lingshu -- list --dir /path/to/plugins`；把本包装成依赖后也可以直接用 `lingshu` 这个 bin。
+全局安装（`npm i -g lingshu-runtime`）后 `lingshu` 与 `lingshu-runtime` 两个命令都可用
+（所以 `npx lingshu-runtime list --dir .` 也成立）。
 
 ### 离线模式（`--fixture`）
 
@@ -197,4 +220,4 @@ CI 文件由上游模板注入，**不要在本仓直接改**；PR 必须回流�
 
 ---
 
-快照：`2026-10-17` · 快照 tag `v0.1.12`
+快照：`2026-10-19` · 快照 tag `v0.1.13`

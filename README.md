@@ -49,6 +49,28 @@ sample plugins, iOS host). See [Related repositories](#related-repositories).
 
 ## Quick start
 
+Third-party plugin authors do not need to clone this repository. Install the runtime globally and work in
+any empty directory:
+
+```bash
+npm i -g lingshu-runtime
+lingshu --version          # confirm the global CLI is ready
+mkdir my-plugins && cd my-plugins
+lingshu init <plugin-id>   # scaffold <plugin-id>.plugin.js + _fixtures/<plugin-id>/
+lingshu test <plugin-id> --dir .
+```
+
+Get the authoring skill package (workflow, `$lib` reference, card DSL reference, template) into your
+agent setup with the CLI itself — no extra installer needed (it ships inside this package under
+[`skills/lingshu-plugin-dev/`](skills/lingshu-plugin-dev)):
+
+```bash
+lingshu skill install          # global, all agents (claude/cursor/codex/agents)
+lingshu skill install --project --agent claude   # or: project-local, one agent
+```
+
+Or clone this repository for a source checkout:
+
 ```bash
 git clone https://github.com/kongtong9527/lingshu-runtime.git
 cd lingshu-runtime
@@ -86,7 +108,8 @@ the current working directory. Passing `--dir` explicitly is the only form that 
 unrelated directory, so it is what the examples above use.
 
 Equivalent spellings: `npm run lingshu -- list --dir /path/to/plugins`, or the `lingshu` bin once the
-package is installed as a dependency.
+package is installed as a dependency. With a global install (`npm i -g lingshu-runtime`) the same CLI
+is available as both `lingshu` and `lingshu-runtime` (so `npx lingshu-runtime list --dir .` works too).
 
 ### Offline mode (`--fixture`)
 
@@ -216,4 +239,4 @@ Each repository is an independent snapshot with its own license; none of them co
 
 ---
 
-Snapshot: `2026-10-17` · snapshot tag `v0.1.12`
+Snapshot: `2026-10-19` · snapshot tag `v0.1.13`

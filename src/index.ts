@@ -5,6 +5,8 @@ import { runCommand } from './commands/run.js'
 import { listCommand } from './commands/list.js'
 import { listingsCommand } from './commands/listings.js'
 import { testCommand } from './commands/test.js'
+import { initCommand } from './commands/init.js'
+import { skillInstallCommand, skillListCommand } from './commands/skill.js'
 
 const program = new Command()
 
@@ -78,10 +80,35 @@ program
   })
 
 program
+  .command('init <plugin-id>')
+  .alias('new')
+  .description('在任意目录生成新插件骨架（<id>.plugin.js + _fixtures/<id>/），全局安装后开发入口')
+  .option('--dir <path>', '目标目录（缺省为当前工作目录）')
+  .option('--force', '已存在同名文件时覆盖')
+  .action(initCommand)
+
+program
   .command('list')
   .description('列出所有可用插件')
   .option('--dir <path>', '插件目录路径')
   .action(listCommand)
+
+const skill = program.command('skill').description('开发技能包管理（包内自带，无需 npx skills）')
+
+skill
+  .command('install [skill-name]')
+  .description('把包内 skill 装进各家 agent 的 skills 目录（默认全局全部 agent）')
+  .option('--scope <scope>', '安装范围：global（用户级，默认）/ project（项目级）')
+  .option('--project', '装进项目级目录（等价 --scope project；--dir 指定项目根，缺省当前目录）')
+  .option('--dir <path>', 'scope=project 时的项目根目录')
+  .option('--agent <names>', '只装这几家（逗号分隔，claude/cursor/codex/agents；缺省全部）')
+  .option('--force', '已存在同名 skill 时覆盖')
+  .action(skillInstallCommand)
+
+skill
+  .command('list')
+  .description('列出包内自带的 skill')
+  .action(skillListCommand)
 
 program
   .command('test <plugin-id>')

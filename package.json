@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "bin": {
-    "lingshu": "./dist/index.js"
+    "lingshu": "./dist/index.js",
+    "lingshu-runtime": "./dist/index.js"
   },
   "exports": {
     ".": {
@@ -49,6 +50,7 @@
   "files": [
     "dist",
     "assets",
+    "skills",
     "README.md",
     "LICENSE",
     "THIRD-PARTY-NOTICES.md"

@@ -1,3 +1,8 @@
+---
+name: lingshu-plugin-dev
+description: 为灵枢(Lingshu)开发数据源适配器插件(.plugin.js)：分析目标站点(HTML/JSON API)、实现 fetchList/fetchDetail(及 getCategories/fetchReadingPage/search/getListings/getExplore/getTags/fetchPlayUrl)、用 $lib 受控能力(cheerio/CryptoJS/dayjs)做解析、用 lingshu CLI 离线 fixture 验证。收到插件开发、新增内容源、调试插件时使用。
+---
+
 # 灵枢插件开发 Skill
 
 **名称：** `lingshu-plugin-dev`
@@ -17,6 +22,11 @@
 - 同一份插件代码在 Node.js 模拟器和未来 Swift JavaScriptCore 端行为一致
 
 ## 开发工作流
+
+> **第三方默认走任意目录工作流**：`npm i -g lingshu-runtime` 后装 skill
+> （`lingshu skill install` 装进各家 agent 的 skills 目录，全局默认 claude/cursor/codex/agents 四家；
+> `--project` 装进当前项目，`--agent claude` 可收窄，`lingshu skill list` 查看包内自带），
+> 然后在**任意空目录**开发，全程用全局命令 `lingshu`。下文阶段 2/3 均按此写；母仓内开发的等价命令见各节末尾「母仓等价」备注。
 
 ### 阶段 0：启动 Firefox Reverse 浏览器（前置检查，必做）
 
@@ -41,7 +51,7 @@ frx-director 有两种调用通道（**二者互斥，同一时刻只用一种**
 - **director 直驱**：`agent_call_tool({name, args})`（单对象信封，README 规范写法，勿写成双位置参数 `(name, args)`）亲自跑浏览器引擎工具（示例：`page_navigate` / `net_capture` / `net_list` / `net_get` / `page_eval`，全量以实时 `agent_tools` 返回为准）。**阶段 1 的常规分析走这条**——步骤确定、需要精确控制，直驱最省心。前置检查见阶段 0。每次直调读返回信封（`ok/data/error`）再定下一步；直驱前先 `agent_tools` 查清目标工具的参数名再填 `args`，不得硬抄本 SKILL 的参数模板。**直驱不需要 worker Key**（`hasKey=false` 也能开工）。
 - **委派 worker**：`agent_start({task, targetUrl, ...})` 起一个 worker agent（返回 `tid`，后续 `agent_poll` / `agent_read[_brief]` / `agent_send` / `agent_stop` / `agent_set_mode` 均带 `tid`，完整闭环见 `references/website-analysis.md` 第 4 节，参数名以实时 `agent_tools` + README 为准）。**签名/加密参数逆向（第 4 节）走这条**——费时、需要多轮试错，交给便宜的标准/快速档 worker 模型磨更省 director token（README 示例为 `deepseek-v4-flash`，**切勿用推理档**如 `deepseek-v4-pro`，长工具循环会退化成纯文本计划；模型选型以 README“前置条件”实时节为准，本 SKILL 模型名仅为快照）。
 
-> ⚠ 直驱与运行中的 agent 会话**不能并发**：要用 `agent_call_tool` 必须先 `agent_stop` / `agent_wait_for_stop` 当前会话；反之直驱期间别再 `agent_start` 起 worker（会抢同一标签页被拒）。`fs_*` 落在会话工作目录（默认在 `firefox-reverse-ws/<会话id>/`，以 README“逆向产物在哪里”实时节为准）：保持默认工作目录、导出后再拷到 `lingshu-plugins/_fixtures/<plugin-id>/` 下；不要为省事把工作目录直接指到仓库根（会把 `ledger.md`/`progress.md`/`scripts/` 混入仓库）。`agent_start` 是否支持改工作目录、参数确切叫什么，以实时 `agent_tools` 为准。
+> ⚠ 直驱与运行中的 agent 会话**不能并发**：要用 `agent_call_tool` 必须先 `agent_stop` / `agent_wait_for_stop` 当前会话；反之直驱期间别再 `agent_start` 起 worker（会抢同一标签页被拒）。`fs_*` 落在会话工作目录（默认在 `firefox-reverse-ws/<会话id>/`，以 README“逆向产物在哪里”实时节为准）：保持默认工作目录、导出后再拷到 `./_fixtures/<plugin-id>/` 下（母仓内开发则为 `lingshu-plugins/_fixtures/<plugin-id>/`）；不要为省事把工作目录直接指到仓库根（会把 `ledger.md`/`progress.md`/`scripts/` 混入仓库）。`agent_start` 是否支持改工作目录、参数确切叫什么，以实时 `agent_tools` 为准。
 
 核心流程（列表页与详情页各做一遍，示例为 director 直驱；下文参数模板均为快照，实调前先 `agent_tools` 核对参数名）：
 
@@ -49,8 +59,8 @@ frx-director 有两种调用通道（**二者互斥，同一时刻只用一种**
 2. **判定数据源**：`agent_call_tool({name:"net_list", args:{method:"GET"}})` 列出请求，`agent_call_tool({name:"net_get", args:{id, includeBody:true}})` 看 body 找返回业务数据的接口。
    - 命中 JSON 接口（响应体里直接含列表/详情字段）→ **JSON API 路径**，记下 URL 模板、method、必要请求头、响应字段路径
    - xhr/fetch 全是埋点统计（`collector.*`、`*/stats` 等）→ **HTML 路径**（SSR，数据在文档里）
-3. **采集 fixture**（默认落到会话工作目录，拷到 `lingshu-plugins/_fixtures/<plugin-id>/` 下直接用）：
-   - JSON：`net_get(id, includeBody:true)` 拿响应体后 `agent_call_tool({name:"fs_write", args:{path:"lingshu-plugins/_fixtures/<plugin-id>/list.json", content}})` 落盘（`path` 写法以实时 `agent_tools` 的 `fs_write` 说明为准；若工作目录即仓库根才可简写为 `_fixtures/...`）
+3. **采集 fixture**（默认落到会话工作目录，拷到 `./_fixtures/<plugin-id>/` 下直接用，母仓内开发则为 `lingshu-plugins/_fixtures/<plugin-id>/`）：
+   - JSON：`net_get(id, includeBody:true)` 拿响应体后 `agent_call_tool({name:"fs_write", args:{path:"_fixtures/<plugin-id>/list.json", content}})` 落盘（`path` 写法以实时 `agent_tools` 的 `fs_write` 说明为准；`path` 按会话工作目录解析，任意目录开发时即为当前插件目录下的 `_fixtures/`）
    - HTML：取 document 响应体同法存为 `list.html`，或 `agent_call_tool({name:"page_eval", args:{expression:"document.documentElement.outerHTML"}})` 拿渲染后 DOM
 4. **确认字段映射**：HTML 路径用 `page_eval` 试跑选择器（`querySelectorAll(...).length`、取首/中/末行的字段）确认能稳定取到 id/title/url/summary；JSON 路径对照响应结构映射字段。
 5. **详情页**：从列表结果取一个 `ListItem.url`，`page_navigate` 过去，对详情页重走 1-4，产出 `detail.json` 或 `detail.html`。
@@ -77,12 +87,15 @@ frx-director 有两种调用通道（**二者互斥，同一时刻只用一种**
 
 ### 签名/加密参数（接口 URL/header 带动态签名时，如 wbi、X-Bogus）：这类逆向费时多轮，**建议委派 worker**（`agent_start` 起标准/快速档 worker，模型选型以 README 实时节为准，把工具名和目标写进 task/guidance），用 `net_get` 的 `initiatorStack` + `signer_trace` / `closure_read` / `code_search` / `hook_inject` 追踪签名生成逻辑（工具是否存在、有无改名以实时 `agent_tools` 为准），再用 `$lib.CryptoJS`/`$lib.crypto` 在插件里复现——详见 `references/website-analysis.md` 第 4 节。
 
-**产物**（落到 `lingshu-plugins/_fixtures/<plugin-id>/`）：list fixture + detail fixture + 接口/选择器的简短记录。
+**产物**（落到 `./_fixtures/<plugin-id>/`，母仓内开发则为 `lingshu-plugins/_fixtures/<plugin-id>/`）：list fixture + detail fixture + 接口/选择器的简短记录。
 
 **KVS 站播放地址**：先按前缀判形态再选链路——`function/` 包裝经 license 置換还原（不可直访，求解用浏览器预言机 + 多样本交集收敛），base64 直链解码直访（curl 验 302 即定案，勿硬套置換；`MQ==` 为空档跳过），详见 `references/video-playback.md`「KVS 播放器地址还原」。
 
 ### 阶段 2：编写插件
-1. 复制 `template.plugin.js` 为 `<plugin-id>.plugin.js`，填好 `// ==Plugin==` 元数据头
+1. 生成骨架：`lingshu init <plugin-id>`（在目标目录执行；`--dir <path>` 指定他处，`new` 同义。
+   产物为 `<plugin-id>.plugin.js` + `_fixtures/<plugin-id>/`）。模板来源：npm 包内 `skills/lingshu-plugin-dev/template.plugin.js`
+  （离线可用）或本 skill 同目录 `template.plugin.js`；手工复制模板亦可，但 `init` 能顺手建好夹具目录。
+   生成后填好 `// ==Plugin==` 元数据头（`sourceUrl` 填目标站点的公开地址）
 2. 实现 `fetchList(context?)` 返回 `ListResult`（`{ items: ListItem[], pagination? }`）；实现 `fetchDetail(url)` 返回 `ArticleDetail`
     - **详情页的实体字段（分类/主演/标签/作者）是可点列表入口，不是死字**：站点若支持按它们筛列表（`cat_id`/`home_id`/`tag_id` 等），用 `tags` / `tagGroups` 芯片 + `target:{action:'list', …}` 接上，**并把站点真实的排序档经 `target.filters` 带上**（别写进 base `category`，宿主是纯拼接）；参数先按「无参/有效/无效」三点对照验生效性、落地地址用自造稳定标识（带参内部路由通常不可深链）——三条口径与案例见 listings.md 规则 18
     - 支持分类筛选的站点可实现 `getCategories()` 返回 `CategoryGroup[]`（分组 + 树形节点），`fetchList` 接收 `context.category`（组合查询字符串）过滤；分组按 `type` 声明筛选类型（`select`/`check`/`text`/`sort`，缺省 `select`），值编码契约见 `references/data-model.md` 的 CategoryGroup 节
@@ -105,9 +118,11 @@ frx-director 有两种调用通道（**二者互斥，同一时刻只用一种**
 
 ### 阶段 3：验证
 
-用模拟器 CLI（在仓库根目录，先 `npm run -w runtime build`）。`<plugin-id>` 为插件元数据头中的 `id`。
+用全局 CLI `lingshu`（`npm i -g lingshu-runtime` 后就有；先 `lingshu --version` 确认版本）。
+`<plugin-id>` 为插件元数据头中的 `id`，`--dir` 缺省即当前目录，任意空目录均可。
 
-**`--dir` 可选**：省略时按优先级自动查找 `../lingshu-plugins` → `./lingshu-plugins` → 当前目录（run.ts:38-49），在 monorepo 根目录运行时可省略。下文示例统一显式写出便于复制。
+> 母仓等价：在母仓根目录先 `npm run -w runtime build`，再把下文 `lingshu` 换成
+> `node runtime/dist/index.js`、`--dir .` 换成 `--dir lingshu-plugins` 即可。
 
 **`run` 命令的动作与参数**（`[target]` 是可选位置参数，只有部分动作消费）：
 
@@ -126,73 +141,81 @@ frx-director 有两种调用通道（**二者互斥，同一时刻只用一种**
 
 **列出可用插件**（确认插件被正确加载、元数据头合法）：
 ```bash
-node runtime/dist/index.js list --dir lingshu-plugins
+lingshu list --dir .
 ```
 
-**离线模式**（使用本地 fixture，不发真实网络；fixture 路径见阶段 1 产物）：
+**离线模式**（使用本地 fixture，不发真实网络；fixture 采自阶段 1，存到 `./_fixtures/<plugin-id>/`）：
 ```bash
 # 列表（fixture 通常为 list.html 或 list.json）
-node runtime/dist/index.js run <plugin-id> list \
-  --dir lingshu-plugins \
-  --fixture lingshu-plugins/_fixtures/<plugin-id>/list.html
+lingshu run <plugin-id> list \
+  --dir . \
+  --fixture _fixtures/<plugin-id>/list.html
 
 # 详情（<url> 取自列表结果的 ListItem.url；fixture 为 detail.json 或 detail.html）
-node runtime/dist/index.js run zhihu-daily detail https://daily.zhihu.com/story/9791387 \
-  --dir lingshu-plugins \
-  --fixture lingshu-plugins/_fixtures/zhihu-daily/detail.json
+lingshu run <plugin-id> detail "https://example.com/post/1" \
+  --dir . \
+  --fixture _fixtures/<plugin-id>/detail.json
 
 # 分类页（fixture 为 categories.html）
-node runtime/dist/index.js run <plugin-id> categories \
-  --dir lingshu-plugins \
-  --fixture lingshu-plugins/_fixtures/<plugin-id>/categories.html
+lingshu run <plugin-id> categories \
+  --dir . \
+  --fixture _fixtures/<plugin-id>/categories.html
 
 # 按分类筛选列表（--category 传入组合查询字符串，与 getCategories 返回的 key/id 对应）
-node runtime/dist/index.js run <plugin-id> list \
-  --dir lingshu-plugins \
+lingshu run <plugin-id> list \
+  --dir . \
   --category "region=cn&state=serial&type=rexue"
 
 # 翻页（--page，默认 1）
-node runtime/dist/index.js run <plugin-id> list \
-  --dir lingshu-plugins \
+lingshu run <plugin-id> list \
+  --dir . \
   --page 2
 
 # 游标翻页（--cursor，回传上一页 pagination.nextCursor；用于 cursor 策略源）
-node runtime/dist/index.js run <plugin-id> list \
-  --dir lingshu-plugins \
+lingshu run <plugin-id> list \
+  --dir . \
   --cursor "eyJwIjoxfQ"
 
 # 搜索（<query> 为查询词，支持 --page / --category）
-node runtime/dist/index.js run <plugin-id> search "关键字" \
-  --dir lingshu-plugins \
+lingshu run <plugin-id> search "关键字" \
+  --dir . \
   --page 1
 
 # 阅读页（<url> 为章节链接，自动跟踪 3xx 重定向）
-node runtime/dist/index.js run manga_site_f reading \
-  "https://www.manga_site_f.com/user/page_direct?comic_id=xxx&section_slot=0&chapter_slot=0" \
-  --dir lingshu-plugins \
-  --fixture lingshu-plugins/_fixtures/manga_site_f/reading.html
+lingshu run <plugin-id> reading \
+  "https://example.com/chapter/1" \
+  --dir . \
+  --fixture _fixtures/<plugin-id>/reading.html
 ```
 
 **格式校验**（轻量校验：`// ==Plugin==` 元数据头字段 + 源码中是否出现 `fetchList`/`fetchDetail` 字符串；**不**验证真实导出和返回结构，需用上面的 `run` 命令实测）：
 ```bash
-node runtime/dist/index.js test <plugin-id> --dir lingshu-plugins
+lingshu test <plugin-id> --dir .
 ```
 
 **在线模式**（去掉 `--fixture` 即可发起真实 HTTP 请求，用于上线前回归）：
 ```bash
-node runtime/dist/index.js run <plugin-id> list --dir lingshu-plugins
+lingshu run <plugin-id> list --dir .
 ```
 
-> 可视化调试工具 DevConsole（Web UI）见仓库 `README.md`「DevConsole」一节，适合快速迭代而非命令行。
+> 可视化调试工具 DevConsole（Web UI）见 `lingshu-devconsole` 仓 README，适合快速迭代而非命令行。
 
 ### 阶段 4：提交
-1. 把插件文件、fixture、`manifest.json` 更新一起提交
-2. `manifest.json` 增加新插件条目（id/name/version/author/description/file/sourceUrl/categories/minRuntimeVersion，参考现有条目格式）
-3. 跑完阶段 5（技能自进化）再提交，无进化也要给出「无通用经验」结论
+第三方（任意目录）默认流程：
+1. 把 `<plugin-id>.plugin.js` + `_fixtures/<plugin-id>/` 一起提交到**自己的插件仓库**（单文件 + 快照即完整交付）
+2. 若自建分发仓，按 `lingshu-plugins` 仓的 `manifest.json` 格式加一条（id/name/version/author/description/file/sourceUrl/categories/minRuntimeVersion），App 填你的 raw manifest 地址即可消费
+3. 若向官方 `lingshu-plugins` 投稿，先读该仓 `CONTENT-POLICY.md`（仅收公开、可匿名访问、`nsfw:0` 的源），按其 `CONTRIBUTING.md` 走 PR
 
-### 阶段 5：技能自进化（每次 dev 闭环必跑，ADR-0036）
+> 母仓等价：插件文件 + fixture + `manifest.json` 更新一起提交，再跑阶段 5。
 
-触发：「一次」= 一次有结论的 dev 闭环（调通 / 放弃 / 提交），不是文件保存、不是单次 run。commit 触及 `lingshu-plugins/<id>/*` 时再做一次幂等检查。typo / 版本号 bump / 纯格式化免检。
+### 阶段 5：技能自进化（母仓维护用，第三方可跳过）
+
+第三方插件开发者**不需要**跑本阶段：它是母仓维护 skill 用的（落盘位置 `docs/adr/`、`CONTEXT.md` 等只在母仓存在）。
+读完阶段 3 验证通过即可交付；若在开发中踩到通用坑，欢迎把「现象 + 复现 + 解法」反馈给 skill 维护者。
+
+母仓内每次 dev 闭环必跑（ADR-0036）：
+
+触发：「一次」= 一次有结论的 dev 闭环（调通 / 放弃 / 提交），不是文件保存、不是单次 run。母仓内 commit 触及 `lingshu-plugins/<id>/*` 时再做一次幂等检查。typo / 版本号 bump / 纯格式化免检。
 
 步骤（5 分钟）：
 1. **通用度判定**：换个插件是否仍会复现？只与本站 DOM/接口字面量有关 → 无通用经验，写明理由即算跑过；通用 → 进第 2 步。内容分三级：L1 踩坑追加 / L2 模式提炼默认允许，L3 结构重构需显式批准。
@@ -251,7 +274,8 @@ module.exports = { /* ...其他导出 */, getAccountSchema, login }
 
 ## 参考示例
 
-仓库内 `lingshu-plugins/` 下有参考实现：
+公开 `lingshu-plugins` 仓（`bilibili-hot` / `zhihu-daily` / `github-trending` 三个干净示例，`git clone` 即得）与下述母仓内实现可对照阅读。
+全局安装后本地没有示例插件时，先 `git clone` 该仓再 `lingshu list --dir <克隆目录>`。
 - `bilibili-hot.plugin.js` — JSON API + dayjs 时间格式化
 - `zhihu-daily.plugin.js` — JSON API 列表 + HTML 详情（cheerio 解析）
 - `github-trending.plugin.js` — HTML 列表（cheerio）+ JSON API 详情

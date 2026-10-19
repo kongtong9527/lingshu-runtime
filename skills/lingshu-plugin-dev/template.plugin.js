@@ -11,19 +11,21 @@
 /**
  * 灵枢插件模板（单文件自包含，不能 require/import 外部模块）。
  *
- * 用法：
- * 1. 复制本文件为 `<plugin-id>.plugin.js`，填好顶部元数据头（id/name/version 必填，
- *    description 必须与 `manifest.json` 对应条目完全一致，否则 vitest 会挂）。
- * 2. 按阶段 1 的 fixture 与接口/选择器记录实现下面各方法，不需要的可选方法直接删掉
- *   （不要留着抛错的空壳）。
- * 3. 验证（仓库根目录，先 `npm run -w runtime build`）：
- *    `node runtime/dist/index.js run <plugin-id> list --dir lingshu-plugins`
- *    离线：加 `--fixture lingshu-plugins/_fixtures/<plugin-id>/list.html`（不发真实网络）；
+ * 用法（第三方任意目录，默认）：`lingshu init <plugin-id>` 生成骨架后，填好顶部元数据头
+ * （id/name/version 必填；自建分发仓时 description 必须与 `manifest.json` 对应条目完全一致）。
+ * 按阶段 1 的 fixture 与接口/选择器记录实现下面各方法，不需要的可选方法直接删掉
+ * （不要留着抛错的空壳）。
+ * 验证（插件所在目录，先 `lingshu --version` 确认全局 CLI 就绪）：
+ *    `lingshu run <plugin-id> list --dir .`
+ *    离线：加 `--fixture _fixtures/<plugin-id>/list.html`（不发真实网络）；
  *    详情/搜索/阅读/播放/分类/探索/标签：`run <id> detail "<url>"` / `search "词"` /
  *    `reading "<url>"` / `play "<url>"` / `categories` / `explore [--url <标识>]` /
- *    `tags [--page N] [--sort xxx]`；目录页逐条验证：`listings <id> --dir lingshu-plugins`。
+ *    `tags [--page N]`；目录页逐条验证：`listings <id> --dir .`。
+ * （母仓等价：仓根先 `npm run -w runtime build`，`lingshu` 换 `node runtime/dist/index.js`，
+ * `--dir .` 换 `--dir lingshu-plugins`，`_fixtures/` 前加 `lingshu-plugins/`。）
  *
- * 契约速查：`lingshu-skills/lingshu-plugin-dev/references/data-model.md`（全部返回结构）、
+ * 契约速查（npm 包内路径 `skills/lingshu-plugin-dev/references/`，母仓内为
+ * `lingshu-skills/lingshu-plugin-dev/references/`）：`data-model.md`（全部返回结构）、
  * `references/api-reference.md`（`$lib` 完整能力）、`references/video-playback.md`（video/episodes）、
  * `references/listings.md`（目录页 17 条准则）、`references/pitfalls.md`（踩坑全文）。
  *
