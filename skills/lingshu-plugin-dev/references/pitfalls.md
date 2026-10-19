@@ -1,16 +1,81 @@
 # 踩坑记录（插件侧）
 
-> 归属：`lingshu-plugin-dev` 技能的插件侧踩坑全文。SKILL.md 只留索引表；新增条目先查本文件去重（阶段 5），重复则合并。宿主侧坑见 devconsole/runtime docs，跨侧互引。
+> 归属：`lingshu-plugin-dev` 技能的插件侧踩坑全文（70 条：症状 / 原因 / 修复 / 真实案例）。结论先行的速查索引见 `pitfalls-index.md`；新增条目先查两处去重（阶段 5），重复则合并。宿主侧坑见 devconsole/runtime docs，跨侧互引见文末「跨侧问题速查」节。
+
+## 条目目录（70 条，按出现顺序）
+
+1. link 块传 `target` 会被宿主忽略（旧契约无此字段），详情页内跳要用它
+2. 渲染后 DOM 当 fixture 可能掩盖「数据全靠运行时接口」，在线实测为准
+3. 沙箱没有 `URL` 全局，别用 `new URL()` 解析请求地址
+4. 统一请求封装已返回对象时不要二次 `JSON.parse`
+5. 写侧接口以 `code` 判定结果，不要只认 `msg`
+6. SSL 证书验证失败（`UNABLE_TO_VERIFY_LEAF_CERTIFICATE`）
+7. 漫画阅读页：`fetchReadingPage` 应提取上一话/下一话（`prevUrl`/`nextUrl`）
+8. HLS 视频 403 / 无法播放
+9. 全站 Cloudflare 拦截（L3，Node 无解型）
+10. `tags` / `recommendations` 块的 URL 约定（插件侧）
+11. macCMS 影视站：`/show/` 筛选路由被 Cloudflare 拦截，分页别依赖它
+12. 播放页解析：encrypt、签名接口与时效 URL（`fetchPlayUrl`）
+13. SSR 缺懒加载标记：列表封面/正文图选择器别依赖运行时属性
+14. 站点展示数是前端现算的假数：角标/计数只认接口原始字段（video_site_j 实证）
+15. 列表混入站外推广卡：卡片解析必须按 href 形态过滤
+16. packed JS（p,a,c,k,e,d）解包 → 播放链路参数自足
+17. 分页 URL 两种形态（query vs path）要分别构造
+18. KVS 站 `data-parameters` 的 `from:max` 不是总页数（滑动窗口），`hasMore` 以 `a.next` 为准
+19. 列表页码段与内容 ID 段同位（都是数字）时，路径分类必须靠「段数/slug」而非前缀
+20. KVS 站搜索页翻页/筛选是 AJAX-only，必须走 `mode=async&function=get_block` 片段接口
+21. 一页多块：条目与分页都必须带块作用域（`.pagination` 取 `.first()` 会静默取错）
+22. 插件元数据头 description 与 manifest.json 必须一致
+23. url 通道目录页的 `filters` 不受 CLI 强验，声明前必须手工实测该页真消费参数
+24. 接口参数契约要在线复现验证，fixture 记录可能过期（movie_site_a labelId 案例）
+25. 卡片摘要：父容器 `.text()` 把相邻内联元素粘连（无分隔）
+26. 多行简介被 `cleanText` 压成一行（换行丢失）
+27. 懒解析 video 块无封面 → 观看历史无封面：`poster` 与顶层 `coverUrl` 必填
+28. frx-director 浏览器起不来：`frx_env_open` 报 `Firefox exited before Marionette became ready`（工具链）
+29. `getExplore` 必须返回裸 `ExploreSection[]`，`viewMore` 必须是 `PageJumpTarget` 对象
+30. Cloudflare `challenge-platform` 信标会注入正常页（已由宿主强特征集根治，勿在插件另写否定门）
+31. 按窗口计数烧声誉的站（同一窗口第二次请求必 403）：frx-director 一次拿全 + 一页一环境
+32. 详情页缺尾斜杠回首页的站：`fetchDetail` 入口必须补齐尾斜杠（历史入口形态）
+33. 页面通道必须消费 `context.page`，不得只从 URL 反解析页码
+34. 社交帖子卡作者链接取文本最长者（头像 fallback 同 href 干扰）
+35. 卡片三件套：根自带底 + 列容器显式左对齐 + 明图混排不断言加密
+36. 卡片内子行独立链接：逐行取 href 并给行节点绑 detail target（只取文本则冒泡进父列表）
+37. 榜单序号跨页必须加偏移（页内 `i+1` 会每页从 1 重排）
+38. 站点原文是相对文案（`2 days ago`）时别换算时间戳：宿主按**绝对**时间渲染 = 凭空的「具体时间」
+39. 详情发布时间：`meta[itemprop=uploadDate]` 缺失时回退 JSON-LD `"uploadDate"`
+40. 图片 URL 禁止硬编码 host：图床迁独立 CDN 即 404，封面从页面解析
+41. 站点迁移 canonical 域名 → 全站列表 0 条（分页却正常解析）
+42. 图片套了第三方代理层：代理回源不带 Referer，防盗链源站必 403（封面全裂）
+43. 二进制接口勿走文本通道 + 沙箱无 randomBytes（Flutter video_site_h 类站）
+44. 列表 summary 长文本致 iOS 瀑布流滚动掉帧：视频站简介默认不发（movie_site_a 动漫）
+45. 详情库旧 CDN 下线：列表新域活、详情旧域 530，同路径换 host 即活（movie_site_a AV/动漫）
+46. 文本截断砍断 emoji 代理对：iOS 整页 3840「格式不正确」（video_site_d热门推荐）
+47. 私有（需登录）内容的空结果被误报成「站点改版」（KVS 站 kvs_site_a）
+48. 登录强制人机验证（reCAPTCHA）的站：账密路线不通，改走 Cookie 登录（KVS 站 kvs_site_a）
+49. Cloudflare 邮箱混淆：用户名 `​.text()` 取到 `[email protected]` 占位符（静默假名）
+50. 封面缺失别留空：用**站点自带的**占位图（SVG 可用，位图优先）
+51. 块的翻页锚 `href="#videos"` 不是地址 ≠ 没有列表页（漏判 = 把站点能力丢掉）
+52. 索引页的「类型开关」是**换页**不是查询参数：内部键漏拦会静默返回未筛选结果
+53. 标签索引页的「服务端排序」别做成宿主硬编码（`TagContext.sort` 已退役）
+54. 首屏 HTML 页与翻页 AJAX 接口分离的站：cursor 必须拼到翻页锚的接口上
+55. 动图封面伪装成静态图：别信后缀与 Content-Type，按字节魔数判（iOS 只显首帧）
+56. 「解锁 VIP」类需求先判付费墙层级：前端字段驱动 ≠ 服务端鉴权（判定法：身份对照实验）
+57. 同站多 API 镜像（v2.a/v2.b/…）：插件要顺序故障转移，别写死一个域名
+58. CryptoJS passphrase 加密的响应：密文是 OpenSSL 格式，Node 侧别直接丢给 createDecipheriv
+59. 服务端对无效参数「宽松兜底」：有数据 ≠ 参数有效，选项真实性要用「兜底指纹」验
+60. 「页面即接口」站：同一个 URL 两副面孔，判别开关是**请求头**而不是请求方法
+61. 详情元数据靠 JSON-LD、而站点的 JSON-LD 是**畸形**的（尾部多一个 `}`）
+62. 索引卡落的是**详情页**时，`target` 不能写 `action:'list'`
+63. 同族页面的排序/筛选 key 不是同一套：别复用兄弟通道的常量
+64. 详情恒报「不存在/已下架」而列表正常：先查 id 提取正则有没有把 id 截断
+65. 把内部路由枚举名当地址用：站点照常渲染、只是内容不是那一页（video_site_h Vlog）
+66. 子页签参数穷举不出来 ≠ 站点不支持：参数是服务端 navFilter 下发的（video_site_h社区页）
+67. 端点回「网络异常」≠ 网络问题：缺的是站点自己的语义参数（video_site_h每日精选）
+68. 分区整块消失：聚合页的分区是**异构**的，单一映射器会把整块静默丢光（video_site_h原创页）
+69. 筛选参数「看着像」不等于生效：三点对照（无参 / 有效值 / 无效值），且别拿 total 当判据
+70. 服务端下发的 filter 对象不能整份照抄：里面混着**页级/广告键**，照抄即空列表
 
 ## 常见问题与踩坑记录
-
-> 索引（按需跳转，全文仍在本节；新增条目先查索引去重，重复则合并——阶段 5）：
-> 契约类：link-target / tags-url / description一致（**改任一侧必当次同步另一侧，先判哪边是事实真相**） / labelId在线验证 / explore信封与viewMore / **详情推荐块块级「更多」（无对应列表页就不写 / url 必是真页、通道标记进 category）** / url通道filters不受CLI强验（**声明前手工实测该页真消费参数**） / 封面缺失用站点自带占位图（**别留空别自造；站点有位图版本优先位图，只有 SVG 也照用——iOS 0.1.29 起自绘子集支持**）；
-> 解析类：渲染后DOM-fixture / 无URL全局 / 二次JSON.parse / code判定 / SSL / 父容器text粘连 / 简介多行压平 / 作者链接取最长文本 / 页码段与内容ID段同位（**路径分类靠段数/slug，勿只看前缀**） / CF邮箱混淆（**用户名 `.text()` 得 `[email protected]` 假名，解 `data-cfemail`**） / **块翻页锚 `href="#…"` 不是地址 ≠ 没有列表页**（块片段接口就是它的列表页，判据 `li.next > a[data-container-id]`）；
-> 内容类：阅读页prevNext / HLS-403 / 全站CF拦截（L3） / macCMS-show拦截 / SSR懒加载标记 / packed解包 / 分页两形态；
-> 链路类：encrypt播放页解析。
-> 工具链类：Marionette 起不来（env_open 速死 / 2828 不可达）。
-> 宿主侧判定与互引见「跨侧问题速查」一节。
 
 
 ### link 块传 `target` 会被宿主忽略（旧契约无此字段），详情页内跳要用它

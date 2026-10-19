@@ -4,6 +4,19 @@
 
 > 真实加载的第三方库见包内 `assets/js-lib/`（母仓内为 `runtime/assets/js-lib/`），由启动时加载到 `$lib`（母仓加载器：`runtime/src/lib-loader.ts`）。
 
+## 目录
+
+- [$lib.http — 网络请求](#libhttp--网络请求)
+- [$lib.storage — KV 存储](#libstorage--kv-存储)
+- [$lib.util — uuid 与随机数](#libutil--uuid-与随机数)
+- [$lib.ui — 插件直问用户 ](#libui--插件直问用户adr-0006)
+- [$lib.cheerio — HTML 解析（cheerio）](#libcheerio--html-解析cheerio)
+- [$lib.dayjs — 时间（dayjs）](#libdayjs--时间dayjs)
+- [$lib.CryptoJS — 加解密（CryptoJS）](#libcryptojs--加解密cryptojs)
+- [其它库](#其它库)
+- [console — 日志](#console--日志)
+- [沙箱限制（不可用）](#沙箱限制不可用)
+
 ## $lib.http — 网络请求
 
 ```typescript

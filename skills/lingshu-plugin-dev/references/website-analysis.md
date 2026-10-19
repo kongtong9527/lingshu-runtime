@@ -4,6 +4,20 @@
 
 > **实时为准原则（frx-director-mcp 更新频繁，本文数值均为快照）**：开工前先实时读取官方 README（`https://raw.githubusercontent.com/WhiteNightShadow/frx-director-mcp/refs/heads/main/README.md`）的“快速开始 / 工具接入自检 / 工具参考 / 版本更新记录”四节，再调 `agent_tools` 核对工具名与参数。以实时读取为准；本文的工具数量、参数模板、模型名均为快照，不得硬抄。直驱信封统一为 `agent_call_tool({name, args})` 单对象形式，下文 `agent_call_tool("xxx", {...})` 均为其简写。
 
+## 目录
+
+- [调用通道（两种，互斥）](#调用通道两种互斥)
+- [工具映射速查（js-reverse → frx-director，快照：参数名以实时 `agent_tools` 为准）](#工具映射速查js-reverse--frx-director快照参数名以实时-agent_tools-为准)
+- [0. 前置：打开页面与开启捕获（参数快照，实调前先 `agent_tools` 核对）](#0-前置打开页面与开启捕获参数快照实调前先-agent_tools-核对)
+- [0b. 备用：frx 不可用时用 chrome-devtools 顶上（L1，2026-09 video_site_d 实证）](#0b-备用frx-不可用时用-chrome-devtools-顶上l12026-09-video_site_d-实证)
+- [1. 判定数据源类型（JSON API vs HTML）](#1-判定数据源类型json-api-vs-html)
+- [2a. JSON API 路径](#2a-json-api-路径)
+- [2b. HTML 路径](#2b-html-路径)
+- [3. 详情页分析](#3-详情页分析)
+- [4. 进阶：签名 / 加密参数（当接口请求带动态签名时）](#4-进阶签名--加密参数当接口请求带动态签名时)
+- [5. 产物清单（分析阶段必须落到 `_fixtures/<plugin-id>/`）](#5-产物清单分析阶段必须落到-_fixturesplugin-id)
+- [6. 站群分析（一份代码多域名时：判身份字段、划内容池）](#6-站群分析一份代码多域名时判身份字段划内容池)
+
 ## 调用通道（两种，互斥）
 
 frx-director 的浏览器能力通过 `agent_call_tool({name, args})`（**director 直驱**）或 `agent_start({task, targetUrl, ...})` + `agent_send({tid, guidance})`（**委派 worker**，`tid` 为 `agent_start` 返回的会话 id，后续 `poll/read/send/stop/set_mode` 均带 `tid`）触达。**同一时刻只能用一种**——运行中的 agent 会话会拒绝 `agent_call_tool`，直驱期间也别再 `agent_start` 起 worker（抢同一标签页被拒）。工具名前缀去客户端前缀后以 README 为准（本仓库实测为 `mcp__frx-director__*`）。
@@ -71,7 +85,7 @@ agent_call_tool({name:"net_list", args:{method:"GET"}})        # 或 { method:"P
    agent_call_tool({name:"fs_write", args:{path:"lingshu-plugins/_fixtures/<plugin-id>/list.json", content:<响应体>}})
    ```
    （`fs_*` 落在会话工作目录，默认需拷到仓库 `lingshu-plugins/_fixtures/` 下；`path` 写法与工作目录含义以实时 `agent_tools` 的 `fs_write` 说明 + README“逆向产物在哪里”实时节为准。）
-3. 字段映射：对照 `references/data-model.md`，把接口字段映射成 `ListItem` / `ArticleDetail`。例如 `{ aid, title, pic, bvid, pubdate }` → `{ id: String(aid), title, coverUrl: pic, url: .../bvid, publishTime: pubdate*1000 }`。
+3. 字段映射：对照同目录 `data-model.md`，把接口字段映射成 `ListItem` / `ArticleDetail`。例如 `{ aid, title, pic, bvid, pubdate }` → `{ id: String(aid), title, coverUrl: pic, url: .../bvid, publishTime: pubdate*1000 }`。
 
 ## 2b. HTML 路径
 

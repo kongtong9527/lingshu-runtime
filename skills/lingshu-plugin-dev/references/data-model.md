@@ -2,6 +2,30 @@
 
 数据模型以 `lingshu-runtime` 包导出类型为准（`import { ListResult } from 'lingshu-runtime'`，声明在包内 `dist/lib.d.ts`；母仓内对应 `runtime/src/types.ts`）。插件返回的数据必须符合以下结构。
 
+## 目录
+
+- [ListItem — 列表项](#listitem--列表项)
+- [列表标签与封面角标（ListItem 老卡扩展，非卡片 DSL）](#列表标签与封面角标listitem-老卡扩展非卡片-dsl)
+- [ArticleDetail — 文章详情](#articledetail--文章详情)
+- [ContentBlock — 内容块](#contentblock--内容块)
+- [PageJumpTarget — 结构化跳转目标](#pagejumptarget--结构化跳转目标)
+- [ReadingPage — 阅读页（漫画/图片集）](#readingpage--阅读页漫画图片集)
+- [PlayUrlResult — 播放解析结果（fetchPlayUrl）](#playurlresult--播放解析结果fetchplayurladr-0020)
+- [线路 × 剧集（episodes block + fetchPlayUrl）](#线路--剧集episodes-block--fetchplayurl)
+- [视频清晰度（双通路）](#视频清晰度adr-0029双通路)
+- [ImageTransport — Base64 文本图片传输](#imagetransport--base64-文本图片传输)
+- [CategoryGroup — 分类分组（类型化筛选）](#categorygroup--分类分组类型化筛选)
+- [Listing — 预设目录页（源主页 listings 页签）](#listing--预设目录页源主页-listings-页签)
+- [页面通道、导航树与递归列表 ](#页面通道导航树与递归列表adr-0025)
+- [懒播放解析（泛化）](#懒播放解析adr-0020--adr-0026-泛化)
+- [ExploreFeed — 发现页（多分区聚合 feed）](#explorefeed--发现页多分区聚合-feed)
+- [TagIndex — 标签索引页（首字分组云 / 分页云）](#tagindex--标签索引页首字分组云--分页云)
+- [PluginContext — fetchList 上下文](#plugincontext--fetchlist-上下文)
+- [列表通道标识（替代 URL 正则分流）](#列表通道标识adr-0064替代-url-正则分流)
+- [ListResult — 列表结果（fetchList / search 的返回信封）](#listresult--列表结果fetchlist--search-的返回信封)
+- [PaginationMeta — 分页元数据（判别联合）](#paginationmeta--分页元数据判别联合)
+- [插件元数据头](#插件元数据头)
+
 ## ListItem — 列表项
 
 ```typescript
