@@ -9,7 +9,7 @@
 - [$lib.http — 网络请求](#libhttp--网络请求)
 - [$lib.storage — KV 存储](#libstorage--kv-存储)
 - [$lib.util — uuid 与随机数](#libutil--uuid-与随机数)
-- [$lib.ui — 插件直问用户 ](#libui--插件直问用户adr-0006)
+- $lib.ui — 插件直问用户
 - [$lib.cheerio — HTML 解析（cheerio）](#libcheerio--html-解析cheerio)
 - [$lib.dayjs — 时间（dayjs）](#libdayjs--时间dayjs)
 - [$lib.CryptoJS — 加解密（CryptoJS）](#libcryptojs--加解密cryptojs)
